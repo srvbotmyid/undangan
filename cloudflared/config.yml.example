@@ -1,0 +1,9 @@
+tunnel: GANTI-DENGAN-TUNNEL-ID
+credentials-file: /home/GANTI-USER/.cloudflared/GANTI-DENGAN-TUNNEL-ID.json
+ingress:
+  - hostname: undangan.domain-kamu.id
+    service: http://localhost:3000
+  - service: http_status:404
+# Cara pakai:
+# cp cloudflared/config.yml.example ~/.cloudflared/config.yml
+# lalu edit tunnel, credentials-file, hostname di atas

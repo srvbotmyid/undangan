@@ -1,0 +1,42 @@
+# Compose untuk VPS tanpa IP publik: app + cloudflared tunnel dalam 1 host
+# Cara pakai di VPS:
+# 1. cp .env.example .env (isi ADMIN_PASSWORD + PUBLIC_BASE_URL=https://undangan.domain-kamu.id)
+# 2. cloudflared tunnel login && cloudflared tunnel create undangan-tunnel
+# 3. cloudflared tunnel route dns undangan-tunnel undangan.domain-kamu.id
+# 4. simpan Tunnel Token dari dashboard ke file .cloudflared-token (atau isi TUNNEL_TOKEN di bawah)
+# 5. docker compose -f docker-compose.tunnel.yml up -d --build
+services:
+  app:
+    build: .
+    container_name: undangan
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+    volumes:
+      - undangan-data:/app/data
+      - undangan-cards:/app/uploads/cards
+    expose:
+      - 3000
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-tunnel
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    # GANTI dengan token dari: cloudflared tunnel token undangan-tunnel
+    # atau: dash.cloudflare.com -> Networks -> Tunnels -> undangan-tunnel -> Install & Run -> copy token
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN:-GANTI-DENGAN-TUNNEL-TOKEN}
+
+volumes:
+  undangan-data:
+  undangan-cards:
