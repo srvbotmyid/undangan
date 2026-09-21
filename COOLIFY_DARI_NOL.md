@@ -1,3 +1,34 @@
+# TAHAP -1 — Layar Welcome (kamu di sini sekarang)
+
+Kamu lihat: "Welcome to Coolify" + tombol ungu Continue.
+Artinya Coolify baru install, belum sambung ke server mana pun. Wajar.
+
+## Klik 1 tombol saja:
+Klik **Continue** (ungu, tengah bawah).
+
+## Setelah klik Continue, kamu masuk 3 langkah otomatis:
+1. **Server connection** — "Connect through SSH to host your resources."
+   - Kalau Coolify install di VPS itu juga → pilih **Localhost / This server**.
+     Tidak perlu IP, tidak perlu kunci. Klik Validate/Save.
+   - Kalau Coolify di laptop tapi mau deploy ke VPS lain → pilih **Remote server**,
+     isi: IP VPS, user `root`, port `22`, private key SSH.
+   - VPS kamu TIDAK ADA IP PUBLIK? Tetap bisa lanjut pakai IP lokal / localhost
+     untuk tahap ini. Onboarding sukses = Coolify jalan lokal. Tapi ingat:
+     tamu dari internet BELUM bisa buka sebelum ada Tunnel/domain (itu Tahap 3-4 nanti).
+
+2. **Docker environment** — "Validate and configure the deployment runtime."
+   - Klik **Validate / Check** → tunggu centang hijau Docker installed.
+   - Kalau merah: di VPS jalankan `docker --version`, kalau belum ada pasang docker dulu.
+
+3. **Project structure** — "Create a project and its first environment."
+   - Project name: `undangan`
+   - Environment: `production` → Create.
+
+Selesai Tahap -1 kalau sudah masuk Dashboard (menu kiri ada Projects/Servers).
+Kirim foto layar berikutnya kalau beda — saya tunjukkan tombolnya.
+
+---
+
 # COOLIFY DARI NOL — Config Awal sampai Hijau (ikuti urutan, jangan loncat)
 
 Target akhir: `https://undangan.domain-kamu.id/healthz` balas `{"ok":true}`.
