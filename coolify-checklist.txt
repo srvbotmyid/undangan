@@ -1,0 +1,32 @@
+# Checklist Config Awal Coolify — Undangan (tempel di tiap Application)
+# Cara pakai: copy blok ENV di bawah ke tab Environment Variables.
+
+## General
+Build Pack: Dockerfile
+Dockerfile Location: /Dockerfile
+Port: 3000
+
+## Environment Variables (WAJIB)
+PORT=3000
+NODE_ENV=production
+ADMIN_PASSWORD=ganti-min-16-karakter-acak-disini
+PUBLIC_BASE_URL=https://undangan.domain-kamu.id
+DB_PATH=./data/guestbook.sqlite
+
+## Storages (WAJIB x2)
+data-undangan => /app/data
+cards-undangan => /app/uploads/cards
+
+## Health Check
+Path: /healthz
+Port: 3000
+
+## Domains
+https://undangan.domain-kamu.id
+# Pertama: DNS Cloudflare A undangan -> IP VPS, Proxy MATI (abu-abu)
+# Setelah sertifikat Valid: boleh Proxied (oranye) + SSL Full (strict)
+# Bypass cache: /api/* dan /uploads/*
+
+## Tes sukses
+# /healthz -> {"ok":true}
+# / -> form muncul | /admin -> login OK | /galeri -> tampil

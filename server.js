@@ -190,7 +190,7 @@ app.use((err, _req, res, _next) => {
   res.status(400).json({ error: err.message || 'Request tidak valid.' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log('Undangan QR jalan di http://localhost:' + PORT);
   console.log('  / (form) | /gift | /galeri | /admin | /healthz');
 });
