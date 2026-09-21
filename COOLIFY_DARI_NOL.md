@@ -3,22 +3,25 @@
 Kamu lihat: "Welcome to Coolify" + tombol ungu Continue.
 Artinya Coolify baru install, belum sambung ke server mana pun. Wajar.
 
+SETUP KAMU (penting, sudah dikonfirmasi):
+- Coolify jalan di PC lokal di sini (VPS = PC ini, tanpa IP publik).
+- Kamu buka Coolify via DOMAIN (bukan localhost) → artinya domain → PC ini
+  SUDAH TERSAMBUNG (via Cloudflare Tunnel / reverse proxy / NAT rumah).
+- Jadi JANGAN pakai pola "VPS ada IP publik + record A". Domain kamu BUKAN
+  menunjuk IP VPS, melainkan menembus NAT ke PC ini. Ikuti Tahap 3-Versi-PC di bawah.
+
 ## Klik 1 tombol saja:
 Klik **Continue** (ungu, tengah bawah).
 
 ## Setelah klik Continue, kamu masuk 3 langkah otomatis:
 1. **Server connection** — "Connect through SSH to host your resources."
-   - Kalau Coolify install di VPS itu juga → pilih **Localhost / This server**.
+   - Pilih **Localhost / This server** (Coolify + aplikasi jalan di PC yang SAMA).
      Tidak perlu IP, tidak perlu kunci. Klik Validate/Save.
-   - Kalau Coolify di laptop tapi mau deploy ke VPS lain → pilih **Remote server**,
-     isi: IP VPS, user `root`, port `22`, private key SSH.
-   - VPS kamu TIDAK ADA IP PUBLIK? Tetap bisa lanjut pakai IP lokal / localhost
-     untuk tahap ini. Onboarding sukses = Coolify jalan lokal. Tapi ingat:
-     tamu dari internet BELUM bisa buka sebelum ada Tunnel/domain (itu Tahap 3-4 nanti).
+   - JANGAN pilih Remote server — itu untuk VPS beda mesin.
 
 2. **Docker environment** — "Validate and configure the deployment runtime."
    - Klik **Validate / Check** → tunggu centang hijau Docker installed.
-   - Kalau merah: di VPS jalankan `docker --version`, kalau belum ada pasang docker dulu.
+   - Kalau merah: di PC jalankan `docker --version`, kalau belum ada pasang Docker Desktop / Docker Engine dulu.
 
 3. **Project structure** — "Create a project and its first environment."
    - Project name: `undangan`
@@ -36,17 +39,20 @@ Waktu: ~10 menit kalau ikuti urutan. Jangan ubah yang tidak disuruh.
 
 ---
 
-## TAHAP 0 — Siapkan 3 hal ini dulu (2 menit)
+## TAHAP 0 — Siapkan 3 hal ini dulu (2 menit) — VERSI PC LOKAL
 
 Centang satu-satu sebelum lanjut:
 
-- [ ] **VPS ADA IP PUBLIK.** Cek: di VPS jalankan `curl -4 ifconfig.me` → keluar angka IP.
-  Kalau error / tidak ada IP → STOP, Coolify tidak bisa. Pakai Tunnel (lihat `TUNNEL_CLOUDFLARE.md`).
-- [ ] **Coolify + server sudah hijau.** Dashboard → Servers → server kamu status Connected/Up.
-- [ ] **Punya subdomain.** Contoh: `undangan.domain-kamu.id`. Belum punya? Tetap lanjut,
-  pakai domain gratis dari Coolify dulu (ada di Tahap 3), custom domain belakangan.
+- [ ] **Coolify bisa dibuka via domain.** Buktinya: kamu sedang buka layar Welcome
+  ini via domain (bukan localhost). ✅ Sudah terbukti dari info kamu.
+  Artinya jalur domain → PC ini SUDAH JALAN. Jangan diubah-ubah.
+- [ ] **Docker jalan di PC ini.** Di PC jalankan `docker --version` → keluar nomor versi.
+  Kalau belum ada → pasang Docker Desktop (Windows) / Docker Engine (Linux) dulu.
+- [ ] **Punya subdomain untuk undangan.** Contoh: `undangan.domain-kamu.id`.
+  Ini BEDA dengan domain Coolify. Rulenya: 1 domain masuk → teruskan ke
+  service undangan port 3000 (lihat Tahap 3-Versi-PC).
 
-Kalau 3 ini belum oke, jangan lanjut — pasti gagal.
+Kalau 3 ini oke, lanjut Tahap 1. Jangan setting DNS A ke IP publik — PC ini tidak punya.
 
 ---
 
@@ -105,18 +111,33 @@ Sudah isi 2a–2d semua? Baru lanjut.
 
 ---
 
-## TAHAP 3 — Domains (pilih salah satu)
+## TAHAP 3 — Domains (VERSI PC LOKAL — BACA INI, JANGAN PAKAI CARA VPS!)
 
-### Opsi 1 — Punya subdomain sendiri (disarankan untuk undangan)
-1. Tab **Domains** → Add → isi `https://undangan.domain-kamu.id` → Save.
-2. Buka Cloudflare → DNS → Add record:
-   - Type `A`, Name `undangan`, Content = **IP publik VPS**, TTL Auto,
-   - Proxy **MATI dulu (abu-abu / DNS only)** — JANGAN oranye dulu!
+Kamu akses Coolify via DOMAIN ke PC tanpa IP publik. Artinya di depan PC ini
+sudah ada penerus (Cloudflare Tunnel / reverse proxy / NAT rumah) yang meneruskan
+domain → PC ini. Jadi domain undangan MENGIKUTI JALUR YANG SAMA, bukan record A ke IP.
+
+### Cara benar:
+1. Tab **Domains** di aplikasi undangan → Add → isi:
+   `https://undangan.domain-kamu.id` → Save.
+   (Ganti dengan subdomain kamu. Harus BEDA dengan domain Coolify!)
+2. Samakan penerusnya dengan domain Coolify:
+   - **Kalau domain Coolify jalan via Cloudflare Tunnel:** tambah hostname
+     `undangan.domain-kamu.id` → service `http://coolify-proxy:80` (atau ke
+     IP proxy Coolify di PC ini). Jangan arahkan langsung ke port 3000 —
+     biar lewat proxy Coolify (SSL + routing otomatis).
+   - **Kalau via reverse proxy (Nginx/Traefik di depan):** tambah server block /
+     router `undangan.domain-kamu.id` → `http://127.0.0.1:3000` (atau ke
+     container proxy Coolify).
+   - **Tidak tahu pakai yang mana?** Lihat domain Coolify kamu: cek di Cloudflare
+     → Networks → Tunnels → hostname domain Coolify mengarah ke service apa.
+     Duplikat polanya untuk subdomain undangan.
 3. Tunggu 1–2 menit. Lanjut Tahap 4.
 
-### Opsi 2 — Belum punya domain (pakai gratisan Coolify dulu)
-1. Tab **Domains** → pakai **Generate Domain / Use Coolify Domain** (misal `xxx.coolify.io`).
-2. Tidak perlu setting DNS manual. Langsung Tahap 4.
+### JANGAN lakukan ini (pasti gagal di PC tanpa IP publik):
+- ❌ Buat record A `undangan → IP publik` (PC ini tidak punya IP publik).
+- ❌ Proxy oranye + sertifikat Let's Encrypt via HTTP-01 (tidak bisa validasi tanpa IP publik).
+  Biarkan SSL ditangani penerus yang sudah jalan (Tunnel/proxy yang sama dengan domain Coolify).
 
 ---
 
