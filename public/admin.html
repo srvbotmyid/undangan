@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Moderasi</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <nav class="topnav">
+    <a href="/">💌 Undangan Digital</a>
+    <div class="links"><a href="/gift">Amplop</a><a href="/galeri">Galeri</a><a href="/admin">Admin</a></div>
+  </nav>
+  <main class="wrap">
+    <div class="card" id="loginCard">
+      <h2>🔐 Login Admin</h2>
+      <p style="color:#8a7a68">Password default <code>admin123</code> — ganti di file <code>.env</code>.</p>
+      <input type="password" id="inpPass" placeholder="Password admin" />
+      <div class="actions"><button class="btn btn-primary" id="btnLogin">Masuk</button></div>
+      <div class="notice" id="loginNotice"></div>
+    </div>
+
+    <div class="card" id="dashCard" style="display:none">
+      <h2>📋 Moderasi Ucapan <span id="stats"></span></h2>
+      <div class="tabs">
+        <button class="btn btn-small active" data-tab="pending">Pending</button>
+        <button class="btn btn-small" data-tab="approved">Approved</button>
+        <button class="btn btn-small" data-tab="rejected">Rejected</button>
+        <button class="btn btn-small btn-ghost" id="btnLogout" style="margin-left:auto">Keluar</button>
+      </div>
+      <!-- FORM EDIT (muncul saat klik Edit, admin bisa ubah nama/pesan/frame) -->
+      <div class="card" id="editCard" style="display:none;background:#fffdf6">
+        <h2 style="margin-top:0">✏️ Edit Ucapan <span id="editId"></span></h2>
+        <label class="lbl" for="editName">Nama Pengirim</label>
+        <input type="text" id="editName" maxlength="100" />
+        <label class="lbl" for="editMessage">Pesan &amp; Doa (maks 500)</label>
+        <textarea id="editMessage" rows="4" maxlength="500"></textarea>
+        <div class="counter"><span id="editCount">0</span>/500</div>
+        <label class="lbl" for="editFrame">Frame</label>
+        <input type="text" id="editFrame" maxlength="20" placeholder="frame1..frame5" list="frameList" />
+        <datalist id="frameList">
+          <option value="frame1"></option><option value="frame2"></option><option value="frame3"></option><option value="frame4"></option><option value="frame5"></option>
+        </datalist>
+        <div class="actions">
+          <button class="btn btn-primary" id="btnEditSave">Simpan Perubahan</button>
+          <button class="btn btn-ghost" id="btnEditCancel">Batal</button>
+        </div>
+        <div class="notice" id="editNotice"></div>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="table">
+        <thead><tr><th>ID</th><th>Pengirim &amp; Ucapan</th><th>Frame</th><th>Kartu</th><th>Aksi</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      </div>
+      <div class="actions"><button class="btn" id="btnMoreAdmin">Muat Lagi</button></div>
+    </div>
+  </main>
+  <script src="/js/admin.js" type="module"></script>
+</body>
+</html>

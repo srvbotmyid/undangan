@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kartu Ucapan Digital</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <nav class="topnav">
+    <a href="/">💌 Undangan Digital</a>
+    <div class="links">
+      <a href="/gift">Amplop</a>
+      <a href="/">Ucapan</a>
+      <a href="/galeri">Galeri</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <p>Kepada Yth. Bapak/Ibu/Saudara/i</p>
+    <div class="guest-name" id="guestName">Tamu Undangan</div>
+    <h1>Berbagi Kebahagiaan 💝</h1>
+    <p>Langkah 1: tanda kasih via Amplop Digital di bawah.<br />Langkah 2: setelah menyalin / berbagi, akses Kartu Ucapan otomatis terbuka ✍️</p>
+  </header>
+
+  <main class="wrap">
+    <!-- GATE AMLOP DULU -->
+    <section class="card" id="giftGate">
+      <h2>🎁 Langkah 1 — Amplop Digital</h2>
+      <p style="color:#8a7a68;margin-top:0">Salin nomor di bawah <b>atau</b> scan QRIS. Setelah itu akses Kartu Ucapan terbuka otomatis.</p>
+      <div class="gift-row">
+        <div><b>BCA</b><br /><code id="rek1">1234567890</code><br /><small>a.n. Mempelai (ganti di index.html)</small></div>
+        <button class="btn btn-small" data-copy="rek1">Salin</button>
+      </div>
+      <div class="gift-row">
+        <div><b>DANA / E-Wallet</b><br /><code id="rek2">081234567890</code><br /><small>a.n. Mempelai</small></div>
+        <button class="btn btn-small" data-copy="rek2">Salin</button>
+      </div>
+      <div style="text-align:center">
+        <p><b>QRIS</b> (scan dari m-banking / e-wallet)</p>
+        <img class="qris" src="/frames/thumbs/frame1.jpg" alt="QRIS - ganti dengan qris.png" />
+        <br /><small style="color:#8a7a68">Ganti gambar di atas dengan <code>public/qris.png</code> milikmu.</small>
+      </div>
+      <div class="notice ok" id="giftStatus" style="display:none"></div>
+      <div class="actions" style="justify-content:center">
+        <button class="btn btn-primary" id="btnGiftDone" type="button">Saya Sudah Berbagi / Lanjut Isi Ucapan ✍️</button>
+      </div>
+    </section>
+
+    <!-- FORM UCAPAN (TERKUNCI SAMPAI AMLOP) -->
+    <section class="card form-locked" id="form">
+      <div class="lock-overlay" id="lockOverlay">
+        <div>🔒 Kartu Ucapan Terkunci
+          <small>Salin nomor Amplop di atas / klik tombol “Saya Sudah Berbagi” untuk membuka akses menulis kartu ucapan.</small>
+        </div>
+      </div>
+      <div class="lockable">
+      <h2>✍️ Langkah 2 — Rangkai Kartu Ucapan</h2>
+      <p style="color:#8a7a68;margin-top:0">Pilih frame, tulis doa, lalu preview otomatis menempel di atas gambar.</p>
+
+      <label class="lbl">1. Pilih Frame (1 dari 5)</label>
+      <div class="frame-grid" id="frameGrid" role="radiogroup" aria-label="Pilih frame"></div>
+
+      <label class="lbl" for="inpMessage">2. Pesan &amp; Doa</label>
+      <textarea id="inpMessage" rows="5" maxlength="500" placeholder="Tuliskan doa terbaik Anda untuk kedua mempelai..."></textarea>
+      <div class="counter"><span id="charCount">0</span>/500</div>
+
+      <label class="lbl" for="inpName">3. Nama Pengirim</label>
+      <input type="text" id="inpName" maxlength="100"
+        placeholder="cth: Dr. Budi Santoso, M.Si / Keluarga Besar Bpk. Andi (beserta pangkat, gelar, atau instansi)" />
+
+      <div class="actions">
+        <button class="btn" id="btnPreview" type="button">🔄 Preview</button>
+        <button class="btn btn-primary" id="btnSubmit" type="button">Kirim &amp; Buat Kartu 💌</button>
+        <a class="btn btn-ghost" id="btnDownload" download="kartu-ucapan.png" href="#">⬇️ Unduh Kartu</a>
+      </div>
+      <div class="notice" id="notice"></div>
+
+      <label class="lbl">Preview Kartu (otomatis)</label>
+      <canvas id="cardCanvas" width="1280" height="720"></canvas>
+      <p class="preview-note">Preview di atas resolusi 1280px. Saat dikirim, file resolusi penuh dikirim ke server + bisa diunduh.</p>
+
+      <div id="successBox" style="display:none" class="notice ok"></div>
+      </div><!-- /.lockable -->
+    </section>
+  </main>
+
+  <footer>
+    Dibuka via QR undangan fisik • <a href="/galeri">Lihat Galeri Ucapan</a> • <a href="/admin">Admin</a>
+  </footer>
+
+  <script src="/js/app.js" type="module"></script>
+</body>
+</html>

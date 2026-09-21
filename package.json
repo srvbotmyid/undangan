@@ -1,0 +1,24 @@
+{
+  "name": "undangan-qr-guestbook",
+  "version": "1.0.0",
+  "description": "Undangan + buku tamu digital QR: amplop gift, form ucapan canvas, galeri publik + moderasi admin",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "optimize-frames": "node tools/optimize-frames.mjs",
+    "make-qr": "node tools/make-qr.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "multer": "^2.0.1",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.33.5"
+  }
+}
+

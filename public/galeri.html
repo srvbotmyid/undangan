@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Galeri Ucapan</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <nav class="topnav">
+    <a href="/">💌 Undangan Digital</a>
+    <div class="links"><a href="/gift">Amplop</a><a href="/">Isi Ucapan</a><a href="/galeri">Galeri</a><a href="/admin">Admin</a></div>
+  </nav>
+  <header class="hero">
+    <h1>Galeri Ucapan 💝</h1>
+    <p>Hanya ucapan yang sudah disetujui admin yang tampil di sini.</p>
+  </header>
+  <main class="wrap">
+    <div class="card">
+      <div class="gallery" id="gallery"></div>
+      <p id="empty" style="display:none;color:#8a7a68">Belum ada ucapan yang disetujui. Jadilah yang pertama <a href="/">isi ucapan</a>!</p>
+      <div class="actions">
+        <button class="btn" id="btnMore">Muat Lagi</button>
+      </div>
+    </div>
+  </main>
+  <footer><a href="/">← Kembali isi ucapan</a></footer>
+  <script src="/js/galeri.js" type="module"></script>
+</body>
+</html>

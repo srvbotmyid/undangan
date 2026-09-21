@@ -1,0 +1,11 @@
+node_modules/
+.env
+data/*.sqlite*
+data/*.db*
+data/*.sqlite-*
+uploads/cards/*.png
+uploads/cards/*.jpg
+uploads/cards/*.jpeg
+uploads/cards/*.webp
+!.env.example
+.DS_Store

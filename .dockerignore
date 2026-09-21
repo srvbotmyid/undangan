@@ -1,0 +1,14 @@
+node_modules/
+npm-debug.log
+.git/
+.gitignore
+data/*.sqlite*
+data/*.db*
+data/*.sqlite-*
+uploads/cards/*
+!uploads/cards/.gitkeep
+.env
+.DS_Store
+frame/
+tools/
+*.log

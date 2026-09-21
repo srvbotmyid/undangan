@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Amplop Digital — Berbagi Kebahagiaan</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <nav class="topnav">
+    <a href="/">💌 Undangan Digital</a>
+    <div class="links">
+      <a href="/gift">Amplop</a>
+      <a href="/">Ucapan</a>
+      <a href="/galeri">Galeri</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <p>Kepada Yth. Bapak/Ibu/Saudara/i</p>
+    <h1>Berbagi Kebahagiaan</h1>
+    <p>Kehadiran Anda sudah menjadi hadiah terindah.<br />Namun jika berkenan memberikan tanda kasih secara cashless:</p>
+  </header>
+
+  <main class="wrap">
+    <section class="card" id="gift">
+      <h2>🎁 Amplop Digital</h2>
+      <div class="gift-row">
+        <div><b>BCA</b><br /><code id="rek1">1234567890</code><br /><small>a.n. Mempelai (ganti di gift.html)</small></div>
+        <button class="btn btn-small" data-copy="rek1">Salin</button>
+      </div>
+      <div class="gift-row">
+        <div><b>DANA / E-Wallet</b><br /><code id="rek2">081234567890</code><br /><small>a.n. Mempelai</small></div>
+        <button class="btn btn-small" data-copy="rek2">Salin</button>
+      </div>
+      <div style="text-align:center">
+        <p><b>QRIS</b> (scan dari m-banking / e-wallet)</p>
+        <!-- Ganti src dengan file QRIS asli kamu: public/qris.png -->
+        <img class="qris" src="/frames/thumbs/frame1.jpg" alt="QRIS - ganti dengan qris.png" />
+        <br /><small style="color:#8a7a68">Ganti gambar di atas dengan <code>public/qris.png</code> milikmu.</small>
+      </div>
+      <div class="cta-sticky">
+        <a href="/" class="btn btn-primary" id="btnGiftNext">Saya Sudah Berbagi — Lanjut Isi Ucapan ✍️</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Dibuka via QR undangan fisik • <a href="/">Isi Kartu Ucapan</a> • <a href="/galeri">Lihat Galeri Ucapan</a> • <a href="/admin">Admin</a>
+  </footer>
+
+  <script>
+    // Salin nomor rekening — setelah copy, tandai amplop selesai agar form di / terbuka.
+    const GIFT_KEY = 'gift_unlocked';
+    document.querySelectorAll('[data-copy]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const text = document.getElementById(btn.getAttribute('data-copy'))?.textContent?.trim() || '';
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.textContent = 'Tersalin OK';
+          setTimeout(() => (btn.textContent = 'Salin'), 1500);
+        } catch (e) { prompt('Salin manual nomor ini:', text); }
+        try { localStorage.setItem(GIFT_KEY, '1'); } catch {}
+      });
+    });
+    document.getElementById('btnGiftNext')?.addEventListener('click', () => {
+      try { localStorage.setItem(GIFT_KEY, '1'); } catch {}
+    });
+  </script>
+</body>
+</html>
