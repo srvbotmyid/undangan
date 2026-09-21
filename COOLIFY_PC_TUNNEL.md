@@ -96,6 +96,27 @@ Tes:
 - SSL error → jangan pakai Let's Encrypt HTTP-01 (PC tanpa IP publik pasti gagal).
   Biarkan SSL dari Tunnel/Cloudflare.
 
+
+## FIX STATUS Exited (21 Sep 2026 - dari screenshot kamu)
+
+Gejala: `undangan:main-...` status `Exited`, `Internal hostname: No deployed container found`.
+
+Penyebab umum dari screenshot kamu:
+1. `Deployment lifecycle` masih isi `php artisan migrate` (default Laravel).
+   App ini Node, jadi HARUS dikosongkan. Kalau tidak, pre/post command gagal -> container Exited.
+2. `Port mappings` isi `3000:3000` -> kosongkan (cukup `Ports exposes=3000`).
+   Mapping manual bikin bentrok di proxy Coolify/Traefik.
+3. Docker Desktop mati -> `docker build` gagal `npipe/dockerDesktopLinuxEngine`.
+   Start Docker Desktop dulu sebelum Deploy/Redeploy.
+
+Perbaikan:
+- Advanced -> Deployment -> Pre-deployment: hapus semua -> kosong.
+- Advanced -> Deployment -> Post-deployment: hapus semua -> kosong -> Save.
+- Networking -> Port mappings: kosongkan -> Save.
+- Pastikan Env 5 baris + Storage 2 baris + Health /healthz:3000 + Domains sudah isi.
+- Observe & troubleshoot -> Runtime Logs: cek error `php artisan not found` / `EADDRINUSE` / `no such file /app/data`.
+- Klik Deploy 1x, tunggu Running/Healthy.
+
 Update kode:
 cd d:\undangan
 git add -A
