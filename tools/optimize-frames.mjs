@@ -1,5 +1,5 @@
 // Optimasi frame asli (2-8 MB, 2752x1536) menjadi ramah mobile.
-// Input : d:\undangan\frame\frame1.png ... frame5.png
+// Input : frame\frameN.png (frame 1-5) atau public\frames\frameN.jpg mentah (frame 6+)
 // Output: public\frames\frameN.jpg (max 1600px, q80) + public\frames\thumbs\frameN.jpg (480px)
 //         + public\frames\frameN.png versi web (max 1600px, kompresi) untuk canvas.
 import sharp from 'sharp';
@@ -16,12 +16,14 @@ const THUMB_DIR = path.join(OUT_DIR, 'thumbs');
 fs.mkdirSync(OUT_DIR, { recursive: true });
 fs.mkdirSync(THUMB_DIR, { recursive: true });
 
-const ids = ['frame1', 'frame2', 'frame3', 'frame4', 'frame5'];
+const ids = ['frame1', 'frame2', 'frame3', 'frame4', 'frame5', 'frame6', 'frame7', 'frame8', 'frame9', 'frame10'];
 
 for (const id of ids) {
-  const src = path.join(SRC_DIR, `${id}.png`);
+  // Cari sumber: frame\frameN.png (asli) → fallback ke public\frames\frameN.jpg mentah.
+  let src = path.join(SRC_DIR, `${id}.png`);
+  if (!fs.existsSync(src)) src = path.join(OUT_DIR, `${id}.jpg`);
   if (!fs.existsSync(src)) {
-    console.warn(`[skip] ${src} tidak ditemukan`);
+    console.warn(`[skip] sumber ${id} tidak ditemukan`);
     continue;
   }
   const meta = await sharp(src).metadata();

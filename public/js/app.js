@@ -2,13 +2,22 @@
 // BOX per-frame dikalibrasi dari visual full-res (koordinat relatif 0-1).
 // - frame1: judul 0.28-0.33 + logo N&I 0.37-0.49, [Dari] di ~0.72 → pesan 0.48-0.65, nama di 0.795, zoom 1.25 agar kotak lebih besar
 // - frame2: Dari: ~0.79-0.80 → pesan 0.34-0.60, nama di 0.875 (di bawah Dari:)
-// - frame4: Dari: ~0.68 → pesan 0.36-0.58, nama di 0.76
+// - frame6 (Anggrek Pink): Dari: ~0.70 → pesan 0.40-0.65, nama di 0.81
+// - frame7 (Lily Putih): Dari: ~0.81 → pesan 0.38-0.74, nama di 0.875
+// - frame8 (Tulip Pink): Dari: ~0.80 → pesan 0.44-0.74, nama di 0.875
+// - frame9 (Satin Lily, tanpa Dari:): bunga kanan, area kiri kosong → pesan 0.30-0.70 kiri-tengah, nama di 0.80
+// - frame10 (Marble Rose, tanpa Dari:): bunga kiri, area kanan kosong → pesan 0.25-0.73 kanan-tengah, nama di 0.82
 const FRAMES = {
   frame1: { src: '/frames/frame1.png', label: 'Emas Elegan', box: { x: 0.18, y: 0.46, w: 0.64, h: 0.20 }, nameY: 0.85, ink: '#4a3310', zoom: 1.28 },
   frame2: { src: '/frames/frame2.png', label: 'Floral Sage', box: { x: 0.24, y: 0.34, w: 0.52, h: 0.26 }, nameY: 0.875, ink: '#6b5433' },
   frame3: { src: '/frames/frame3.png', label: 'Putih Minimalis', box: { x: 0.22, y: 0.33, w: 0.56, h: 0.36 }, nameY: 0.84, ink: '#8a6d2e' },
   frame4: { src: '/frames/frame4.png', label: 'Blush Romantis', box: { x: 0.27, y: 0.36, w: 0.46, h: 0.22 }, nameY: 0.76, ink: '#6b5433' },
-  frame5: { src: '/frames/frame5.png', label: 'Royal Maroon', box: { x: 0.20, y: 0.32, w: 0.60, h: 0.39 }, nameY: 0.845, ink: '#7a5f22' }
+  frame5: { src: '/frames/frame5.png', label: 'Royal Maroon', box: { x: 0.20, y: 0.32, w: 0.60, h: 0.39 }, nameY: 0.845, ink: '#7a5f22' },
+  frame6: { src: '/frames/frame6.png', label: 'Anggrek Pink', box: { x: 0.24, y: 0.40, w: 0.52, h: 0.25 }, nameY: 0.81, ink: '#8a1c4f' },
+  frame7: { src: '/frames/frame7.png', label: 'Lily Putih', box: { x: 0.22, y: 0.38, w: 0.56, h: 0.36 }, nameY: 0.875, ink: '#8a1c4f' },
+  frame8: { src: '/frames/frame8.png', label: 'Tulip Pink', box: { x: 0.24, y: 0.44, w: 0.52, h: 0.30 }, nameY: 0.875, ink: '#5a5a3a' },
+  frame9: { src: '/frames/frame9.png', label: 'Satin Lily', box: { x: 0.10, y: 0.30, w: 0.55, h: 0.40 }, nameY: 0.80, ink: '#6b3a2a' },
+  frame10: { src: '/frames/frame10.png', label: 'Marble Rose', box: { x: 0.38, y: 0.25, w: 0.54, h: 0.48 }, nameY: 0.82, ink: '#6b5433' }
 };
 
 const state = { frameId: 'frame1', message: '', name: '', guestToken: '', giftProof: '' };

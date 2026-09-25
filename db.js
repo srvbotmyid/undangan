@@ -20,6 +20,37 @@ const schemaPath = path.join(__dirname, 'schema.sql');
 const schema = fs.readFileSync(schemaPath, 'utf8');
 db.exec(schema);
 
+// Migrasi ringan: DB lama (sebelum frame6-10) punya CHECK frame_id
+// yang hanya mengizinkan frame1-5. SQLite tidak bisa ALTER CHECK,
+// jadi buat ulang tabel greetings dengan skema baru sambil mempertahankan data.
+try {
+  const row = db.prepare(
+    "SELECT sql FROM sqlite_master WHERE type='table' AND name='greetings'"
+  ).get();
+  if (row && row.sql && !row.sql.includes('frame10')) {
+    db.exec(`CREATE TABLE IF NOT EXISTS greetings_new (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sender_name VARCHAR(100) NOT NULL,
+  message TEXT NOT NULL CHECK(length(message) >= 1 AND length(message) <= 500),
+  frame_id TEXT NOT NULL CHECK(frame_id IN ('frame1','frame2','frame3','frame4','frame5','frame6','frame7','frame8','frame9','frame10')),
+  card_image_path TEXT,
+  guest_token TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+  created_at DATETIME DEFAULT (datetime('now','localtime')),
+  moderated_at DATETIME,
+  moderated_by TEXT DEFAULT 'admin'
+);
+INSERT INTO greetings_new (id, sender_name, message, frame_id, card_image_path, guest_token, status, created_at, moderated_at, moderated_by)
+  SELECT id, sender_name, message, frame_id, card_image_path, guest_token, status, created_at, moderated_at, moderated_by FROM greetings;
+DROP TABLE greetings;
+ALTER TABLE greetings_new RENAME TO greetings;
+CREATE INDEX IF NOT EXISTS idx_greetings_status_created ON greetings(status, created_at DESC);`);
+    console.log('Migrasi DB: tabel greetings diperluas ke frame1-frame10.');
+  }
+} catch (e) {
+  console.warn('Migrasi DB frame6-10 dilewati:', e.message);
+}
+
 // Seed tabel frames (id -> file publik + label)
 const seedFrames = [
   ['frame1', '/frames/frame1.png', 'Emas Elegan'],
@@ -27,13 +58,18 @@ const seedFrames = [
   ['frame3', '/frames/frame3.png', 'Putih Minimalis'],
   ['frame4', '/frames/frame4.png', 'Blush Romantis'],
   ['frame5', '/frames/frame5.png', 'Royal Maroon'],
+  ['frame6', '/frames/frame6.png', 'Anggrek Pink'],
+  ['frame7', '/frames/frame7.png', 'Lily Putih'],
+  ['frame8', '/frames/frame8.png', 'Tulip Pink'],
+  ['frame9', '/frames/frame9.png', 'Satin Lily'],
+  ['frame10', '/frames/frame10.png', 'Marble Rose'],
 ];
 const insertFrame = db.prepare(
   'INSERT OR IGNORE INTO frames (id, file, label) VALUES (?, ?, ?)'
 );
 for (const f of seedFrames) insertFrame.run(...f);
 
-export const FRAME_IDS = ['frame1', 'frame2', 'frame3', 'frame4', 'frame5'];
+export const FRAME_IDS = ['frame1', 'frame2', 'frame3', 'frame4', 'frame5', 'frame6', 'frame7', 'frame8', 'frame9', 'frame10'];
 
 export function insertGreeting({ sender_name, message, frame_id, card_image_path, guest_token }) {
   const stmt = db.prepare(

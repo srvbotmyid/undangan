@@ -78,7 +78,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/healthz', (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
 app.get('/api/frames', (_req, res) => {
-  const rows = db.prepare('SELECT id, file, label FROM frames ORDER BY id').all();
+  const rows = db.prepare('SELECT id, file, label FROM frames ORDER BY CAST(SUBSTR(id, 6) AS INTEGER)').all();
   res.json(rows);
 });
 

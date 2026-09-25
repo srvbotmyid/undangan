@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS greetings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   sender_name VARCHAR(100) NOT NULL,
   message TEXT NOT NULL CHECK(length(message) >= 1 AND length(message) <= 500),
-  frame_id TEXT NOT NULL CHECK(frame_id IN ('frame1','frame2','frame3','frame4','frame5')),
+  frame_id TEXT NOT NULL CHECK(frame_id IN ('frame1','frame2','frame3','frame4','frame5','frame6','frame7','frame8','frame9','frame10')),
   card_image_path TEXT,
   guest_token TEXT,
   status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
