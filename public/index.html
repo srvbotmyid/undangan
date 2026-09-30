@@ -4,32 +4,42 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nara &amp; Ilyas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Jost:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/style.css" />
 </head>
-<body>
-  <nav class="topnav">
-    <a href="/">Nara &amp; Ilyas</a>
-    <div class="links">
-      <a href="/gift">Amplop</a>
-      <a href="/">Ucapan</a>
-      <a href="/galeri">Galeri</a>
+<body class="theme-undangan">
+  <div class="cover" id="cover">
+    <div class="cover-frame">
+      <p class="cover-kicker">Undangan Pernikahan</p>
+      <h1 class="cover-names">Nara &amp; Ilyas</h1>
+      <div class="ornament" aria-hidden="true"><span></span></div>
+      <p class="cover-to">Kepada</p>
+      <div class="cover-guest" id="guestName">Tamu Undangan</div>
+      <button class="btn btn-primary cover-open" id="btnOpen" type="button">Buka Undangan</button>
     </div>
-  </nav>
+  </div>
 
-  <header class="hero">
-    <p>Kepada Yth.</p>
-    <div class="guest-name" id="guestName">Tamu Undangan</div>
-    <h1>Nara &amp; Ilyas</h1>
-    <p>Terima kasih sudah hadir. Tulis ucapan di bawah, atau kirim tanda kasih lewat rekening ini.</p>
-  </header>
+  <main class="invite">
+    <header class="invite-hero">
+      <p class="kicker">The Wedding of</p>
+      <h1>Nara &amp; Ilyas</h1>
+      <div class="ornament" aria-hidden="true"><span></span></div>
+      <p class="cover-to">Kepada</p>
+      <p class="hero-guest" id="guestNameInner">Tamu Undangan</p>
+      <p class="ayat">Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan untukmu pasangan dari jenismu sendiri, supaya kamu merasa tenteram kepadanya, dan dijadikan-Nya di antaramu rasa kasih dan sayang.</p>
+      <p class="ayat-src">Ar-Rum: 21</p>
+    </header>
 
-  <main class="wrap">
     <section class="card" id="giftGate">
-      <h2>Amplop Digital</h2>
-      <p class="muted">BCA · a.n. Nadita Ranasya</p>
+      <p class="kicker">Amplop Digital</p>
+      <h2>Tanda Kasih</h2>
+      <p class="muted">Doa restu Anda sudah lebih dari cukup. Kalau ingin mengirim tanda kasih, rekeningnya di bawah.</p>
+      <p class="bank">BCA · a.n. Nadita Ranasya</p>
       <div class="gift-row">
         <div><code id="rek1">7314191995</code></div>
-        <button class="btn btn-small" data-copy="rek1">Salin</button>
+        <button class="btn btn-small" data-copy="rek1" type="button">Salin</button>
       </div>
       <div class="notice ok" id="giftStatus" style="display:none"></div>
       <div class="actions" style="justify-content:center">
@@ -44,38 +54,48 @@
         </div>
       </div>
       <div class="lockable">
-      <h2>Kartu Ucapan</h2>
-      <p class="muted">Pilih bingkai, tulis doa, lalu kirim. Tulisannya menempel di gambar.</p>
+        <p class="kicker">Guestbook</p>
+        <h2>Ucapan &amp; Doa</h2>
+        <p class="muted">Pilih bingkai, tulis doa, lalu kirim. Tulisannya menempel di gambar.</p>
 
-      <label class="lbl">Bingkai</label>
-      <div class="frame-grid" id="frameGrid" role="radiogroup" aria-label="Pilih bingkai"></div>
+        <label class="lbl">Bingkai</label>
+        <div class="frame-grid" id="frameGrid" role="radiogroup" aria-label="Pilih bingkai"></div>
 
-      <label class="lbl" for="inpMessage">Ucapan</label>
-      <textarea id="inpMessage" rows="5" maxlength="500" placeholder="Doa dan ucapan untuk Nara &amp; Ilyas"></textarea>
-      <div class="counter"><span id="charCount">0</span>/500</div>
+        <label class="lbl" for="inpMessage">Ucapan</label>
+        <textarea id="inpMessage" rows="5" maxlength="500" placeholder="Doa dan ucapan untuk Nara &amp; Ilyas"></textarea>
+        <div class="counter"><span id="charCount">0</span>/500</div>
 
-      <label class="lbl" for="inpName">Nama</label>
-      <input type="text" id="inpName" maxlength="100" placeholder="Nama Anda" />
+        <label class="lbl" for="inpName">Nama</label>
+        <input type="text" id="inpName" maxlength="100" placeholder="Nama Anda" />
 
-      <div class="actions">
-        <button class="btn" id="btnPreview" type="button">Lihat dulu</button>
-        <button class="btn btn-primary" id="btnSubmit" type="button">Kirim kartu</button>
-        <a class="btn btn-ghost" id="btnDownload" download="kartu-ucapan.png" href="#">Unduh</a>
-      </div>
-      <div class="notice" id="notice"></div>
+        <div class="actions" style="justify-content:center">
+          <button class="btn" id="btnPreview" type="button">Lihat dulu</button>
+          <button class="btn btn-primary" id="btnSubmit" type="button">Kirim Ucapan</button>
+          <a class="btn btn-ghost" id="btnDownload" download="kartu-ucapan.png" href="#">Unduh</a>
+        </div>
+        <div class="notice" id="notice"></div>
 
-      <label class="lbl">Hasil</label>
-      <canvas id="cardCanvas" width="1280" height="720"></canvas>
-      <p class="preview-note">Di layar lebih kecil. File yang dikirim tetap utuh.</p>
+        <label class="lbl">Hasil</label>
+        <canvas id="cardCanvas" width="1280" height="720"></canvas>
+        <p class="preview-note">Di layar lebih kecil. File yang dikirim tetap utuh.</p>
 
-      <div id="successBox" style="display:none" class="notice ok"></div>
+        <div id="successBox" style="display:none" class="notice ok"></div>
       </div>
     </section>
-  </main>
 
-  <footer>
-    <a href="/galeri">Galeri ucapan</a>
-  </footer>
+    <section class="card wishes-card">
+      <p class="kicker">Doa Tamu</p>
+      <h2>Ucapan Masuk</h2>
+      <div id="wishList" class="wish-list"></div>
+    </section>
+
+    <footer class="invite-foot">
+      <p>Atas doa restunya, kami ucapkan terima kasih.</p>
+      <p class="script-sign">Hormat kami</p>
+      <p class="cover-names foot-names">Nara &amp; Ilyas</p>
+      <p class="foot-links"><a href="/gift">Amplop</a> · <a href="/galeri">Galeri</a></p>
+    </footer>
+  </main>
 
   <script src="/js/app.js" type="module"></script>
 </body>

@@ -19,7 +19,16 @@ const $ = (id) => document.getElementById(id);
 (function personalize() {
   const q = new URLSearchParams(location.search);
   const to = (q.get('to') || '').trim();
-  if (to) $('guestName').textContent = to;
+  if (to) {
+    $('guestName').textContent = to;
+    const inner = $('guestNameInner');
+    if (inner) inner.textContent = to;
+    const nameInput = $('inpName');
+    if (nameInput && !nameInput.value) {
+      nameInput.value = to;
+      state.name = to;
+    }
+  }
   state.guestToken = (q.get('token') || '').slice(0, 50);
 })();
 
@@ -210,6 +219,60 @@ $('btnPreview').addEventListener('click', () => {
   renderCard().catch((e) => notice('Gagal memuat gambar frame: ' + e.message, 'err'));
 });
 
+
+(function cover() {
+  const el = $('cover');
+  const btn = $('btnOpen');
+  if (!el || !btn) return;
+  document.body.classList.add('cover-on');
+  const open = () => {
+    el.classList.add('is-open');
+    document.body.classList.remove('cover-on');
+  };
+  btn.addEventListener('click', open);
+})();
+
+function formatWishTime(iso) {
+  if (!iso) return '';
+  const d = new Date(String(iso).replace(' ', 'T'));
+  if (Number.isNaN(d.getTime())) return String(iso);
+  return d.toLocaleString('id-ID', {
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+async function loadWishes() {
+  const box = $('wishList');
+  if (!box) return;
+  try {
+    const res = await fetch('/api/greetings?page=1&limit=24');
+    const data = await res.json();
+    const rows = data.rows || [];
+    if (!rows.length) {
+      box.innerHTML = '<p class="wish-empty">Belum ada ucapan. Jadilah yang pertama.</p>';
+      return;
+    }
+    box.innerHTML = rows.map((g) => {
+      const name = escapeHtml(g.sender_name);
+      const msg = escapeHtml(g.message);
+      const when = escapeHtml(formatWishTime(g.created_at));
+      return '<article class="wish-item"><div class="wish-name">' + name + '</div>' +
+        '<time>' + when + '</time><p>' + msg + '</p></article>';
+    }).join('');
+  } catch {
+    box.innerHTML = '<p class="wish-empty">Ucapan belum bisa dimuat.</p>';
+  }
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>\"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
+loadWishes();
+
 $('btnSubmit').addEventListener('click', async () => {
   const btn = $('btnSubmit');
   try {
@@ -239,12 +302,12 @@ $('btnSubmit').addEventListener('click', async () => {
     box.innerHTML = html;
     notice('Ucapan masuk. Belum tampil di galeri sampai disetujui.', 'ok');
     box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    loadWishes();
   } catch (e) {
     notice(e.message || 'Gagal mengirim.', 'err');
   }
   btn.disabled = false;
-  btn.textContent = 'Kirim kartu';
+  btn.textContent = 'Kirim Ucapan';
 });
 
 renderCard().catch((e) => console.error(e));
-
