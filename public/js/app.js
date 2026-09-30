@@ -1,12 +1,4 @@
-// Logika utama: personalisasi ?to=, picker frame, canvas overlay, submit.
-// BOX per-frame dikalibrasi dari visual full-res (koordinat relatif 0-1).
-// - frame1: judul 0.28-0.33 + logo N&I 0.37-0.49, [Dari] di ~0.72 → pesan 0.48-0.65, nama di 0.795, zoom 1.25 agar kotak lebih besar
-// - frame2: Dari: ~0.79-0.80 → pesan 0.34-0.60, nama di 0.875 (di bawah Dari:)
-// - frame6 (Anggrek Pink): Dari: ~0.70 → pesan 0.40-0.65, nama di 0.81
-// - frame7 (Lily Putih): Dari: ~0.81 → pesan 0.38-0.74, nama di 0.875
-// - frame8 (Tulip Pink): Dari: ~0.80 → pesan 0.44-0.74, nama di 0.875
-// - frame9 (Satin Lily, tanpa Dari:): bunga kanan, area kiri kosong → pesan 0.30-0.70 kiri-tengah, nama di 0.80
-// - frame10 (Marble Rose, tanpa Dari:): bunga kiri, area kanan kosong → pesan 0.25-0.73 kanan-tengah, nama di 0.82
+// Kartu ucapan: pilih bingkai, overlay teks, kirim.
 const FRAMES = {
   frame1: { src: '/frames/frame1.png', label: 'Emas Elegan', box: { x: 0.18, y: 0.46, w: 0.64, h: 0.20 }, nameY: 0.85, ink: '#4a3310', zoom: 1.28 },
   frame2: { src: '/frames/frame2.png', label: 'Floral Sage', box: { x: 0.24, y: 0.34, w: 0.52, h: 0.26 }, nameY: 0.875, ink: '#6b5433' },
@@ -37,16 +29,13 @@ document.querySelectorAll('[data-copy]').forEach((btn) => {
     const text = document.getElementById(id)?.textContent?.trim() || '';
     try {
       await navigator.clipboard.writeText(text);
-      btn.textContent = 'Tersalin OK';
+      btn.textContent = 'Tersalin';
       setTimeout(() => (btn.textContent = 'Salin'), 1500);
-    } catch (e) { prompt('Salin manual nomor ini:', text); }
-    // Syarat terpenuhi: sudah copy amplop → buka akses kartu ucapan.
+    } catch (e) { prompt('Salin nomor ini:', text); }
     unlockGift('copy:' + id);
   });
 });
 
-// GATE: amplop dulu, baru kartu ucapan. Kunci disimpan di localStorage
-// agar tetap terbuka walau halaman di-refresh / kembali dari /gift.
 const GIFT_KEY = 'gift_unlocked';
 function isGiftUnlocked() {
   try { return localStorage.getItem(GIFT_KEY) === '1'; } catch { return false; }
@@ -59,7 +48,7 @@ function applyGiftLock() {
   if (status) {
     if (open) {
       status.style.display = 'block';
-      status.textContent = 'Terima kasih sudah berbagi kebahagiaan 🙏 Akses Kartu Ucapan sudah terbuka — silakan isi di bawah.';
+      status.textContent = 'Silakan tulis ucapan di bawah.';
     } else {
       status.style.display = 'none';
     }
@@ -67,7 +56,6 @@ function applyGiftLock() {
 }
 function unlockGift(source) {
   try { localStorage.setItem(GIFT_KEY, '1'); } catch {}
-  // Tandai asal (copy / tombol / halaman gift) untuk audit ringan di server.
   state.giftProof = (source || 'manual').slice(0, 50);
   applyGiftLock();
   const form = $('form');
@@ -169,9 +157,6 @@ async function renderCard(exportWidth) {
     ctx.drawImage(img, 0, 0, W, H);
   }
 
-  // Kotak teks per-frame (sudah dikalibrasi agar tidak menabrak
-  // judul "NARA & ILYAS" di atas dan "Dari:" bawaan gambar di bawah).
-  // Sengaja TANPA panel kaca agar motif bunga/emas tetap terlihat.
   const box = cfg.box;
   const bx = box.x * W, by = box.y * H;
   const bw = box.w * W, bh = box.h * H;
@@ -183,7 +168,7 @@ async function renderCard(exportWidth) {
   const minFs = Math.round(W * 0.014);
   const setF = (px) => { ctx.font = 'italic 600 ' + px + "px Georgia, serif"; };
   setF(fs);
-  const msg = state.message || 'Tuliskan doa terbaik Anda di sini...';
+  const msg = state.message || 'Tulis ucapan di sini';
   let lines = wrapText(ctx, msg, bw - 24);
   let guard = 0;
   while (lines.length * fs * 1.45 > bh && fs > minFs && guard < 40) {
@@ -195,7 +180,6 @@ async function renderCard(exportWidth) {
   const maxLines = Math.max(1, Math.floor(bh / (fs * 1.45)));
   const shown = lines.slice(0, maxLines);
   const totalH = shown.length * fs * 1.45;
-  // Vertikal: tengah di dalam box agar selalu rapi.
   let y = by + (bh - totalH) / 2 + fs * 0.95;
   ctx.lineWidth = Math.max(2, Math.round(fs / 10));
   for (const l of shown) {
@@ -204,8 +188,6 @@ async function renderCard(exportWidth) {
     y += fs * 1.45;
   }
 
-  // Nama pengirim: ditaruh tepat di bawah teks "Dari:" bawaan frame,
-  // jadi hanya nama saja (tanpa "-- --" agar menyatu dengan desain).
   const nameFs = Math.max(Math.round(W * 0.016), Math.round(fs * 0.62));
   ctx.font = 'italic 700 ' + nameFs + 'px Georgia, serif';
   ctx.lineWidth = Math.max(2, Math.round(nameFs / 10));
@@ -231,7 +213,7 @@ $('btnPreview').addEventListener('click', () => {
 $('btnSubmit').addEventListener('click', async () => {
   const btn = $('btnSubmit');
   try {
-    if (!isGiftUnlocked()) { notice('Silakan berbagi via Amplop Digital dulu (salin nomor / klik tombol di Langkah 1) untuk membuka akses kartu ucapan.', 'err'); document.getElementById('giftGate')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    if (!isGiftUnlocked()) { notice('Salin rekening di atas dulu, atau tekan lanjut.', 'err'); document.getElementById('giftGate')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (!state.message.trim()) { notice('Ucapan wajib diisi.', 'err'); return; }
     if (!state.name.trim()) { notice('Nama pengirim wajib diisi.', 'err'); return; }
     btn.disabled = true;
@@ -251,17 +233,17 @@ $('btnSubmit').addEventListener('click', async () => {
     if (!res.ok) throw new Error(json.error || 'Gagal menyimpan.');
     const box = $('successBox');
     box.style.display = 'block';
-    let html = 'Berhasil! ID #' + json.id + ' status: <b>pending</b>. ';
-    if (json.card_url) html += '<a href="' + json.card_url + '" target="_blank">Lihat hasil kartu</a> - ';
-    html += '<a href="/galeri">Lihat Galeri</a>';
+    let html = 'Ucapan terkirim (#' + json.id + '). Menunggu persetujuan. ';
+    if (json.card_url) html += '<a href="' + json.card_url + '" target="_blank">Lihat kartu</a> · ';
+    html += '<a href="/galeri">Galeri</a>';
     box.innerHTML = html;
-    notice('Ucapan terkirim. Menunggu persetujuan admin.', 'ok');
+    notice('Ucapan masuk. Belum tampil di galeri sampai disetujui.', 'ok');
     box.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } catch (e) {
     notice(e.message || 'Gagal mengirim.', 'err');
   }
   btn.disabled = false;
-  btn.textContent = 'Kirim & Buat Kartu';
+  btn.textContent = 'Kirim kartu';
 });
 
 renderCard().catch((e) => console.error(e));

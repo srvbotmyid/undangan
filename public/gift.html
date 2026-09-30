@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Amplop Digital — Berbagi Kebahagiaan</title>
+  <title>Amplop — Nara &amp; Ilyas</title>
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
   <nav class="topnav">
-    <a href="/">💌 Undangan Digital</a>
+    <a href="/">Nara &amp; Ilyas</a>
     <div class="links">
       <a href="/gift">Amplop</a>
       <a href="/">Ucapan</a>
@@ -17,39 +17,39 @@
   </nav>
 
   <header class="hero">
-    <p>Kepada Yth. Bapak/Ibu/Saudara/i</p>
-    <h1>Berbagi Kebahagiaan</h1>
-    <p>Kehadiran Anda sudah menjadi hadiah terindah.<br />Namun jika berkenan memberikan tanda kasih secara cashless:</p>
+    <p>Kepada Yth.</p>
+    <h1>Amplop Digital</h1>
+    <p>Kehadiran sudah cukup. Kalau ingin mengirim tanda kasih, rekeningnya di bawah.</p>
   </header>
 
   <main class="wrap">
     <section class="card" id="gift">
-      <h2>🎁 Amplop Digital</h2>
+      <h2>BCA</h2>
+      <p class="muted">a.n. Nadita Ranasya</p>
       <div class="gift-row">
-        <div><b>BCA</b><br /><code id="rek1">7314191995</code><br /><small>a.n. Nadita Ranasya</small></div>
+        <div><code id="rek1">7314191995</code></div>
         <button class="btn btn-small" data-copy="rek1">Salin</button>
       </div>
       <div class="cta-sticky">
-        <a href="/" class="btn btn-primary" id="btnGiftNext">Saya Sudah Berbagi — Lanjut Isi Ucapan ✍️</a>
+        <a href="/" class="btn btn-primary" id="btnGiftNext">Isi kartu ucapan</a>
       </div>
     </section>
   </main>
 
   <footer>
-    Dibuka via QR undangan fisik • <a href="/">Isi Kartu Ucapan</a> • <a href="/galeri">Lihat Galeri Ucapan</a> • <a href="/admin">Admin</a>
+    <a href="/">Kartu ucapan</a> · <a href="/galeri">Galeri</a>
   </footer>
 
   <script>
-    // Salin nomor rekening — setelah copy, tandai amplop selesai agar form di / terbuka.
     const GIFT_KEY = 'gift_unlocked';
     document.querySelectorAll('[data-copy]').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const text = document.getElementById(btn.getAttribute('data-copy'))?.textContent?.trim() || '';
         try {
           await navigator.clipboard.writeText(text);
-          btn.textContent = 'Tersalin OK';
+          btn.textContent = 'Tersalin';
           setTimeout(() => (btn.textContent = 'Salin'), 1500);
-        } catch (e) { prompt('Salin manual nomor ini:', text); }
+        } catch (e) { prompt('Salin nomor ini:', text); }
         try { localStorage.setItem(GIFT_KEY, '1'); } catch {}
       });
     });

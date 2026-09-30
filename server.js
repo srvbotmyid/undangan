@@ -1,5 +1,4 @@
-// Server Undangan QR + Buku Tamu Digital
-// Node 24 + Express 4 + node:sqlite (tanpa native build)
+// Server undangan: Express + SQLite
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
@@ -29,7 +28,7 @@ if (ADMIN_PASSWORD === 'admin123') {
 }
 
 const app = express();
-app.set('trust proxy', 1); // wajib di balik proxy Coolify/Cloudflare agar req.ip & rate-limit benar
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 

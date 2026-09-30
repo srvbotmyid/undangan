@@ -1,7 +1,7 @@
 {
   "name": "undangan-qr-guestbook",
   "version": "1.0.0",
-  "description": "Undangan + buku tamu digital QR: amplop gift, form ucapan canvas, galeri publik + moderasi admin",
+  "description": "Kartu ucapan digital Nara & Ilyas",
   "type": "module",
   "main": "server.js",
   "scripts": {

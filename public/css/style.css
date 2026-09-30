@@ -27,6 +27,7 @@ a { color: var(--green); }
 }
 .hero h1 { margin: 0 0 8px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(28px, 5vw, 44px); }
 .hero p { margin: 6px 0; color: var(--muted); }
+.muted { color: var(--muted); margin-top: 0; }
 .guest-name { font-size: 20px; color: var(--ink); font-weight: 700; }
 .card {
   background: var(--card);
@@ -110,7 +111,7 @@ textarea:focus, input:focus { outline: 2px solid var(--gold-soft); border-color:
 .badge.rejected { background: #fdecea; color: var(--red); }
 footer { text-align: center; color: var(--muted); padding: 28px 12px 60px; font-size: 13px; }
 .qris { display: block; margin: 8px auto; max-width: 220px; width: 100%; border-radius: 12px; border: 1px solid var(--line); }
-/* GATE: amplop dulu, kartu terkunci */
+/* Form terkunci sampai rekening disalin atau tombol lanjut ditekan */
 .form-locked { position: relative; overflow: hidden; }
 .form-locked .lockable { filter: blur(3px); pointer-events: none; user-select: none; opacity: 0.55; }
 .lock-overlay {
