@@ -15,21 +15,27 @@ function loadEnv() {
     const txt = fs.readFileSync(path.join(__dirname, '.env'), 'utf8');
     for (const line of txt.split('\n')) {
       const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-      if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+      if (m && !process.env[m[1]]) {
+        let v = m[2].trim();
+        if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+          v = v.slice(1, -1);
+        }
+        process.env[m[1]] = v;
+      }
     }
   } catch { /* .env opsional */ }
 }
 loadEnv();
 
 const PORT = Number(process.env.PORT || 3000);
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || 'admin123').trim();
 if (ADMIN_PASSWORD === 'admin123') {
   console.warn('WARNING: ADMIN_PASSWORD masih default. Ganti di .env sebelum deploy!');
 }
 
 const app = express();
 app.set('trust proxy', 1);
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 
 const hits = new Map();
@@ -89,20 +95,94 @@ app.get('/api/greetings', (req, res) => {
 });
 
 
-// --- Auth admin: password tunggal -> token in-memory ---
-const adminTokens = new Set();
+// --- Auth admin: password tunggal, token disimpan di data/admin-tokens.json ---
+const TOKEN_FILE = path.join(__dirname, 'data', 'admin-tokens.json');
+function loadAdminTokens() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(TOKEN_FILE, 'utf8'));
+    const now = Date.now();
+    return new Set((Array.isArray(raw) ? raw : []).filter((t) => t && t.token && (!t.exp || t.exp > now)).map((t) => t.token));
+  } catch {
+    return new Set();
+  }
+}
+function saveAdminTokens() {
+  try {
+    fs.mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
+    const exp = Date.now() + 7 * 24 * 60 * 60 * 1000;
+    fs.writeFileSync(TOKEN_FILE, JSON.stringify([...adminTokens].map((token) => ({ token, exp }))));
+  } catch (e) {
+    console.warn('Gagal simpan token admin:', e.message);
+  }
+}
+const adminTokens = loadAdminTokens();
+const COOKIE_NAME = 'admin_session';
+
+function cookieShouldBeSecure(req) {
+  if (req.secure) return true;
+  const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase();
+  return proto === 'https';
+}
+
+function parseCookies(req) {
+  const out = {};
+  const raw = req.headers.cookie || '';
+  for (const part of raw.split(';')) {
+    const i = part.indexOf('=');
+    if (i < 1) continue;
+    out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+  }
+  return out;
+}
+
+function setAdminCookie(req, res, token) {
+  const parts = [
+    COOKIE_NAME + '=' + encodeURIComponent(token),
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Lax',
+    'Max-Age=' + String(7 * 24 * 60 * 60),
+  ];
+  if (cookieShouldBeSecure(req)) parts.push('Secure');
+  res.setHeader('Set-Cookie', parts.join('; '));
+}
+
+function clearAdminCookie(req, res) {
+  const parts = [COOKIE_NAME + '=', 'Path=/', 'HttpOnly', 'SameSite=Lax', 'Max-Age=0'];
+  if (cookieShouldBeSecure(req)) parts.push('Secure');
+  res.setHeader('Set-Cookie', parts.join('; '));
+}
+
+function readAdminToken(req) {
+  const header = req.headers['x-admin-token'] || '';
+  const auth = String(req.headers.authorization || '');
+  const bearer = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
+  const cookie = parseCookies(req)[COOKIE_NAME] || '';
+  return String(header || bearer || cookie || '').trim();
+}
+
 app.post('/api/admin/login', rateLimit, (req, res) => {
-  const { password } = req.body || {};
-  if (password === ADMIN_PASSWORD) {
+  const password = String((req.body || {}).password || '').trim();
+  if (password && password === ADMIN_PASSWORD) {
     const token = crypto.randomUUID();
     adminTokens.add(token);
-    return res.json({ token });
+    saveAdminTokens();
+    setAdminCookie(req, res, token);
+    return res.json({ ok: true, token });
   }
   res.status(401).json({ error: 'Password salah.' });
 });
 
+app.post('/api/admin/logout', (req, res) => {
+  const t = readAdminToken(req);
+  if (t) adminTokens.delete(t);
+  saveAdminTokens();
+  clearAdminCookie(req, res);
+  res.json({ ok: true });
+});
+
 function requireAdmin(req, res, next) {
-  const t = req.headers['x-admin-token'];
+  const t = readAdminToken(req);
   if (t && adminTokens.has(t)) return next();
   res.status(401).json({ error: 'Unauthorized. Silakan login admin.' });
 }
@@ -152,6 +232,7 @@ app.delete('/api/admin/greetings/:id', requireAdmin, (req, res) => {
 
 app.get('/galeri', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'galeri.html')));
 app.get('/gift', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'gift.html')));
+app.get('/admin', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
 app.post('/api/greetings', rateLimit, upload.single('card'), (req, res) => {
   try {
@@ -201,6 +282,4 @@ for (const sig of ['SIGTERM', 'SIGINT']) {
     process.exit(0);
   });
 }
-
-app.get('/admin', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 

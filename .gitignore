@@ -7,6 +7,7 @@ frame/
 data/*.sqlite*
 data/*.db*
 data/*.sqlite-*
+data/admin-tokens.json
 uploads/cards/*.png
 uploads/cards/*.jpg
 uploads/cards/*.jpeg

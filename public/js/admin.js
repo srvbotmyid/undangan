@@ -16,31 +16,62 @@ function showDash(show) {
   $('dashCard').style.display = show ? '' : 'none';
 }
 
-async function login() {
-  const pass = $('inpPass').value;
-  const res = await fetch('/api/admin/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password: pass }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    const n = $('loginNotice');
-    n.className = 'notice err';
-    n.textContent = data.error || 'Gagal login.';
+function loginNotice(msg, type) {
+  const n = $('loginNotice');
+  if (!msg) {
+    n.className = 'notice';
+    n.textContent = '';
     return;
   }
-  token = data.token;
-  sessionStorage.setItem('admin_token', token);
-  showDash(true);
-  refresh();
+  n.className = 'notice ' + (type || 'err');
+  n.textContent = msg;
+}
+
+async function login() {
+  const btn = $('btnLogin');
+  const pass = String($('inpPass').value || '').trim();
+  if (!pass) {
+    loginNotice('Isi password dulu.');
+    return;
+  }
+  try {
+    btn.disabled = true;
+    loginNotice('');
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ password: pass }),
+    });
+    const text = await res.text();
+    let data = {};
+    try { data = text ? JSON.parse(text) : {}; } catch {
+      throw new Error(res.ok ? 'Server tidak merespons JSON.' : 'Login gagal (HTTP ' + res.status + ').');
+    }
+    if (!res.ok) {
+      loginNotice(data.error || (res.status === 429 ? 'Terlalu banyak percobaan, tunggu sebentar.' : 'Gagal login.'));
+      return;
+    }
+    token = data.token || '';
+    if (token) sessionStorage.setItem('admin_token', token);
+    else sessionStorage.removeItem('admin_token');
+    showDash(true);
+    await refresh();
+  } catch (e) {
+    loginNotice(e.message || 'Tidak bisa menghubungi server.');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function api(path, opts = {}) {
-  const res = await fetch(path, {
-    ...opts,
-    headers: { ...(opts.headers || {}), 'x-admin-token': token, 'Content-Type': 'application/json' },
-  });
+  const headers = { ...(opts.headers || {}), Accept: 'application/json' };
+  if (opts.body) headers['Content-Type'] = 'application/json';
+  if (token) {
+    headers['x-admin-token'] = token;
+    headers.Authorization = 'Bearer ' + token;
+  }
+  const res = await fetch(path, { ...opts, credentials: 'same-origin', headers });
   if (res.status === 401) {
     token = '';
     sessionStorage.removeItem('admin_token');
@@ -184,10 +215,27 @@ $('btnMoreAdmin').addEventListener('click', () => { if (page < totalPages) { pag
 $('btnEditSave').addEventListener('click', saveEdit);
 $('btnEditCancel').addEventListener('click', closeEdit);
 $('editMessage').addEventListener('input', (e) => { $('editCount').textContent = String(e.target.value.length); });
-$('btnLogout').addEventListener('click', () => {
+$('btnLogout').addEventListener('click', async () => {
+  try {
+    const headers = { Accept: 'application/json' };
+    if (token) {
+      headers['x-admin-token'] = token;
+      headers.Authorization = 'Bearer ' + token;
+    }
+    await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin', headers });
+  } catch { /* tetap keluar di UI */ }
   token = '';
   sessionStorage.removeItem('admin_token');
   showDash(false);
 });
 
-if (token) { showDash(true); refresh().catch(() => showDash(false)); }
+(async () => {
+  try {
+    const res = await api('/api/admin/stats');
+    if (!res.ok) throw new Error('unauth');
+    showDash(true);
+    await refresh();
+  } catch {
+    showDash(false);
+  }
+})();

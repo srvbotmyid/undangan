@@ -5,6 +5,7 @@ npm-debug.log
 data/*.sqlite*
 data/*.db*
 data/*.sqlite-*
+data/admin-tokens.json
 uploads/cards/*
 !uploads/cards/.gitkeep
 .env
