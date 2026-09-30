@@ -75,7 +75,7 @@ a { color: var(--green); }
 }
 .frame-item input:checked ~ span { color: var(--ink); font-weight: 700; }
 label.lbl { display: block; font-weight: 700; margin: 16px 0 6px; }
-textarea, input[type="text"], input[type="password"] {
+textarea, input[type="text"], input[type="password"], select {
   width: 100%; border: 1px solid var(--line); border-radius: 12px;
   padding: 12px; font-size: 16px; font-family: inherit; background: #fff;
 }
@@ -100,7 +100,7 @@ textarea:focus, input:focus { outline: 2px solid var(--gold-soft); border-color:
 .g-item img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
 .g-item .meta { padding: 10px 12px; }
 .g-item .meta b { display: block; }
-.g-item .meta small { color: var(--muted); }
+.g-item .meta small { color: var(--muted); white-space: pre-wrap; }
 .tabs { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
 .tabs button.active { background: var(--ink); color: #fff; border-color: var(--ink); }
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -165,7 +165,9 @@ footer { text-align: center; color: var(--muted); padding: 28px 12px 60px; font-
 .theme-undangan .card .lbl,
 .theme-undangan .card textarea,
 .theme-undangan .card input,
+.theme-undangan .card select,
 .theme-undangan .frame-grid,
+.theme-undangan .font-grid,
 .theme-undangan .counter,
 .theme-undangan .preview-note,
 .theme-undangan .notice {
@@ -288,7 +290,8 @@ footer { text-align: center; color: var(--muted); padding: 28px 12px 60px; font-
 }
 .theme-undangan .form-locked { text-align: center; }
 .theme-undangan textarea,
-.theme-undangan input[type="text"] {
+.theme-undangan input[type="text"],
+.theme-undangan select {
   background: #fff;
   border-radius: 0;
   border: 0;
@@ -330,6 +333,7 @@ footer { text-align: center; color: var(--muted); padding: 28px 12px 60px; font-
   font-size: 15px;
   line-height: 1.6;
   color: var(--ink);
+  white-space: pre-wrap;
 }
 .wish-empty {
   color: var(--muted);
@@ -351,6 +355,55 @@ footer { text-align: center; color: var(--muted); padding: 28px 12px 60px; font-
 .foot-links { margin-top: 18px; font-size: 13px; }
 .foot-links a { color: var(--gold); text-decoration: none; font-weight: 600; }
 body.cover-on { overflow: hidden; }
+.font-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.font-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 6px 8px;
+  background: #fff;
+}
+.font-item input { position: absolute; opacity: 0; }
+.font-item .font-swatch {
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.font-item small {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: "Jost", sans-serif;
+}
+.font-item:has(input:checked) {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-soft);
+  background: #fffaf2;
+}
+.font-cormorant { font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-weight: 600; }
+.font-vibes { font-family: "Great Vibes", cursive; font-weight: 400; }
+.font-dancing { font-family: "Dancing Script", cursive; font-weight: 600; }
+.font-playfair { font-family: "Playfair Display", Georgia, serif; font-style: italic; font-weight: 500; }
+.font-merriweather { font-family: "Merriweather", Georgia, serif; font-style: italic; font-weight: 400; }
+.font-jost { font-family: "Jost", sans-serif; font-weight: 500; }
+textarea.font-cormorant,
+textarea.font-vibes,
+textarea.font-dancing,
+textarea.font-playfair,
+textarea.font-merriweather,
+textarea.font-jost { font-size: 18px; line-height: 1.5; }
+.wish-item p.font-vibes,
+.wish-item p.font-dancing { font-size: 22px; line-height: 1.45; }
+.g-item .meta small.font-vibes,
+.g-item .meta small.font-dancing { font-size: 16px; }
 @media (min-width: 900px) {
   .theme-undangan {
     background:

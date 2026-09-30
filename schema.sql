@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS greetings (
   frame_id TEXT NOT NULL CHECK(frame_id IN ('frame1','frame2','frame3','frame4','frame5','frame6','frame7','frame8','frame9','frame10')),
   card_image_path TEXT,
   guest_token TEXT,
+  font_id TEXT NOT NULL DEFAULT 'cormorant',
   status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
   created_at DATETIME DEFAULT (datetime('now','localtime')),
   moderated_at DATETIME,

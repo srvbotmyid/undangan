@@ -108,7 +108,7 @@ async function loadRows() {
     const tr = document.createElement('tr');
     tr.innerHTML =
       `<td>#${g.id}<br/><small>${esc(g.created_at || '')}</small></td>` +
-      `<td><b>${esc(g.sender_name)}</b><br/><small>${esc(g.message)}</small><br/>` +
+      `<td><b>${esc(g.sender_name)}</b><br/><small style="white-space:pre-wrap">${esc(g.message)}</small><br/>` +
       `<span class="badge ${g.status}">${g.status}</span></td>` +
       `<td>${esc(g.frame_id)}</td>` +
       `<td>${g.card_image_path ? `<a href="${g.card_image_path}" target="_blank">Lihat</a>` : '-'}</td>` +
@@ -163,6 +163,7 @@ function openEdit(g) {
   $('editMessage').value = g.message || '';
   $('editCount').textContent = String(($('editMessage').value || '').length);
   $('editFrame').value = g.frame_id || '';
+  $('editFont').value = g.font_id || 'cormorant';
   $('editNotice').className = 'notice';
   $('editNotice').textContent = '';
   $('editCard').style.display = '';
@@ -186,6 +187,7 @@ async function saveEdit() {
         sender_name: $('editName').value,
         message: $('editMessage').value,
         frame_id: $('editFrame').value,
+        font_id: $('editFont').value,
       }),
     });
     const data = await res.json();

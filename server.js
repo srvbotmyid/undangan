@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { db, FRAME_IDS, insertGreeting, listGreetings, getStats, setStatus, deleteGreeting, updateGreeting } from './db.js';
+import { db, FRAME_IDS, FONT_IDS, insertGreeting, listGreetings, getStats, setStatus, deleteGreeting, updateGreeting } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -68,13 +68,14 @@ const upload = multer({
   },
 });
 
-function validateGreeting({ sender_name, message, frame_id }) {
+function validateGreeting({ sender_name, message, frame_id, font_id }) {
   const errors = [];
   if (!sender_name || !String(sender_name).trim()) errors.push('Nama pengirim wajib diisi.');
   if (String(sender_name || '').length > 100) errors.push('Nama maksimal 100 karakter.');
   if (!message || !String(message).trim()) errors.push('Ucapan wajib diisi.');
   if (String(message || '').length > 500) errors.push('Ucapan maksimal 500 karakter.');
   if (!FRAME_IDS.includes(frame_id)) errors.push('frame_id tidak valid.');
+  if (font_id && !FONT_IDS.includes(font_id)) errors.push('font_id tidak valid.');
   return errors;
 }
 
@@ -201,18 +202,18 @@ app.get('/api/admin/greetings', requireAdmin, (req, res) => {
 });
 
 app.patch('/api/admin/greetings/:id', requireAdmin, (req, res) => {
-  const { status, sender_name, message, frame_id } = req.body || {};
+  const { status, sender_name, message, frame_id, font_id } = req.body || {};
   try {
-    // Mode edit isi (nama/pesan/frame), boleh digabung dengan ganti status.
-    if (sender_name !== undefined || message !== undefined || frame_id !== undefined) {
-      const changes = updateGreeting(Number(req.params.id), { sender_name, message, frame_id });
+    // Mode edit isi (nama/pesan/frame/font), boleh digabung dengan ganti status.
+    if (sender_name !== undefined || message !== undefined || frame_id !== undefined || font_id !== undefined) {
+      const changes = updateGreeting(Number(req.params.id), { sender_name, message, frame_id, font_id });
       if (!changes) return res.status(404).json({ error: 'Data tidak ditemukan.' });
     }
     if (status !== undefined) {
       const changes = setStatus(Number(req.params.id), status);
       if (!changes) return res.status(404).json({ error: 'Data tidak ditemukan.' });
     }
-    if (sender_name === undefined && message === undefined && frame_id === undefined && status === undefined) {
+    if (sender_name === undefined && message === undefined && frame_id === undefined && font_id === undefined && status === undefined) {
       return res.status(400).json({ error: 'Tidak ada perubahan.' });
     }
     res.json({ ok: true });
@@ -241,7 +242,8 @@ app.post('/api/greetings', rateLimit, upload.single('card'), (req, res) => {
     const message = bb.message || '';
     const frame_id = bb.frame_id || '';
     const guest_token = bb.guest_token || '';
-    const errors = validateGreeting({ sender_name, message, frame_id });
+    const font_id = bb.font_id || 'cormorant';
+    const errors = validateGreeting({ sender_name, message, frame_id, font_id });
     if (errors.length) {
       if (req.file) fs.unlink(req.file.path, () => {});
       return res.status(400).json({ error: errors.join(' ') });
@@ -253,6 +255,7 @@ app.post('/api/greetings', rateLimit, upload.single('card'), (req, res) => {
       frame_id,
       card_image_path,
       guest_token: String(guest_token || '').slice(0, 50),
+      font_id,
     });
     res.status(201).json({
       id, status: 'pending', card_url: card_image_path,

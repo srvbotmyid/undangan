@@ -15,8 +15,10 @@ async function load(reset = false) {
     const img = g.card_image_path
       ? `<img src="${g.card_image_path}" alt="Kartu ${g.sender_name}" loading="lazy" />`
       : '';
+    const fontClass = 'font-' + (g.font_id || 'cormorant');
+    const snippet = escapeHtml(g.message.slice(0, 120)) + (g.message.length > 120 ? '…' : '');
     div.innerHTML = `${img}<div class="meta"><b>${escapeHtml(g.sender_name)}</b>` +
-      `<small>${escapeHtml(g.message.slice(0, 120))}${g.message.length > 120 ? '…' : ''}</small></div>`;
+      `<small class="${fontClass}">${snippet.replace(/\n/g, '<br>')}</small></div>`;
     box.appendChild(div);
   }
   document.getElementById('btnMore').style.display = page < totalPages ? '' : 'none';

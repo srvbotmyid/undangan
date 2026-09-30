@@ -12,7 +12,16 @@ const FRAMES = {
   frame10: { src: '/frames/frame10.png', label: 'Marble Rose', box: { x: 0.38, y: 0.25, w: 0.54, h: 0.48 }, nameY: 0.82, ink: '#6b5433' }
 };
 
-const state = { frameId: 'frame1', message: '', name: '', guestToken: '', giftProof: '' };
+const state = { frameId: 'frame1', fontId: 'cormorant', message: '', name: '', guestToken: '', giftProof: '' };
+
+const FONTS = {
+  cormorant: { label: 'Elegan', family: '"Cormorant Garamond", Georgia, serif', style: 'italic 600' },
+  vibes: { label: 'Script', family: '"Great Vibes", cursive', style: '400' },
+  dancing: { label: 'Tulisan Tangan', family: '"Dancing Script", cursive', style: '600' },
+  playfair: { label: 'Klasik', family: '"Playfair Display", Georgia, serif', style: 'italic 500' },
+  merriweather: { label: 'Serif', family: '"Merriweather", Georgia, serif', style: 'italic 400' },
+  jost: { label: 'Modern', family: '"Jost", sans-serif', style: '500' },
+};
 const imageCache = {};
 const $ = (id) => document.getElementById(id);
 
@@ -113,6 +122,28 @@ $('inpName').addEventListener('input', (e) => {
   t = setTimeout(() => renderCard().catch(() => {}), 180);
 });
 
+(function renderFontPicker() {
+  const grid = $('fontGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  Object.entries(FONTS).forEach(([id, cfg]) => {
+    const label = document.createElement('label');
+    label.className = 'font-item';
+    const checked = id === state.fontId ? 'checked' : '';
+    label.innerHTML =
+      '<input type="radio" name="wishFont" value="' + id + '" ' + checked + '>' +
+      '<span class="font-swatch font-' + id + '">Aa</span>' +
+      '<small>' + cfg.label + '</small>';
+    label.querySelector('input').addEventListener('change', () => {
+      state.fontId = id;
+      $('inpMessage').className = 'font-' + id;
+      renderCard().catch(() => {});
+    });
+    grid.appendChild(label);
+  });
+  $('inpMessage').className = 'font-' + state.fontId;
+})();
+
 function loadImage(src) {
   if (imageCache[src]) return Promise.resolve(imageCache[src]);
   return new Promise((resolve, reject) => {
@@ -124,16 +155,39 @@ function loadImage(src) {
 }
 
 function wrapText(ctx, text, maxW) {
-  const words = String(text || '').split(/\s+/).filter(Boolean);
+  const paragraphs = String(text || '').replace(/\r\n/g, '\n').split('\n');
   const lines = [];
-  let line = '';
-  for (const w of words) {
-    const trial = line ? line + ' ' + w : w;
-    if (ctx.measureText(trial).width > maxW && line) { lines.push(line); line = w; }
-    else { line = trial; }
+  for (const para of paragraphs) {
+    const words = para.split(/\s+/).filter(Boolean);
+    if (!words.length) {
+      lines.push('');
+      continue;
+    }
+    let line = '';
+    for (const w of words) {
+      const trial = line ? line + ' ' + w : w;
+      if (ctx.measureText(trial).width > maxW && line) {
+        lines.push(line);
+        line = w;
+      } else {
+        line = trial;
+      }
+    }
+    if (line) lines.push(line);
   }
-  if (line) lines.push(line);
   return lines.length ? lines : [''];
+}
+
+function fontSpec(px, forName) {
+  const cfg = FONTS[state.fontId] || FONTS.cormorant;
+  const style = forName ? (cfg.style.includes('italic') ? 'italic 700' : '700') : cfg.style;
+  return style + ' ' + px + 'px ' + cfg.family;
+}
+
+async function ensureFont(px) {
+  if (!document.fonts || !document.fonts.load) return;
+  const spec = fontSpec(px || 32);
+  try { await document.fonts.load(spec); } catch { /* fallback sistem */ }
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -150,6 +204,7 @@ async function renderCard(exportWidth) {
   const W = exportWidth || 1280;
   const H = Math.round((W * 9) / 16);
   const cfg = FRAMES[state.frameId];
+  await ensureFont(48);
   const img = await loadImage(cfg.src);
   const canvas = $('cardCanvas');
   canvas.width = W;
@@ -175,7 +230,7 @@ async function renderCard(exportWidth) {
   ctx.strokeStyle = 'rgba(255,255,255,0.85)';
   let fs = Math.round(Math.min(W * 0.028, bh * 0.28));
   const minFs = Math.round(W * 0.014);
-  const setF = (px) => { ctx.font = 'italic 600 ' + px + "px Georgia, serif"; };
+  const setF = (px) => { ctx.font = fontSpec(px); };
   setF(fs);
   const msg = state.message || 'Tulis ucapan di sini';
   let lines = wrapText(ctx, msg, bw - 24);
@@ -198,7 +253,7 @@ async function renderCard(exportWidth) {
   }
 
   const nameFs = Math.max(Math.round(W * 0.016), Math.round(fs * 0.62));
-  ctx.font = 'italic 700 ' + nameFs + 'px Georgia, serif';
+  ctx.font = fontSpec(nameFs, true);
   ctx.lineWidth = Math.max(2, Math.round(nameFs / 10));
   const nameText = (state.name || 'Nama Pengirim').slice(0, 100);
   const ny = (cfg.nameY || 0.8) * H;
@@ -255,10 +310,11 @@ async function loadWishes() {
     }
     box.innerHTML = rows.map((g) => {
       const name = escapeHtml(g.sender_name);
-      const msg = escapeHtml(g.message);
+      const msg = escapeHtml(g.message).replace(/\n/g, '<br>');
       const when = escapeHtml(formatWishTime(g.created_at));
+      const fontClass = 'font-' + (g.font_id && FONTS[g.font_id] ? g.font_id : 'cormorant');
       return '<article class="wish-item"><div class="wish-name">' + name + '</div>' +
-        '<time>' + when + '</time><p>' + msg + '</p></article>';
+        '<time>' + when + '</time><p class="' + fontClass + '">' + msg + '</p></article>';
     }).join('');
   } catch {
     box.innerHTML = '<p class="wish-empty">Ucapan belum bisa dimuat.</p>';
@@ -288,6 +344,7 @@ $('btnSubmit').addEventListener('click', async () => {
     fd.append('sender_name', state.message ? state.name.trim() : '');
     fd.append('message', state.message.trim());
     fd.append('frame_id', state.frameId);
+    fd.append('font_id', state.fontId);
     fd.append('gift_proof', state.giftProof || (isGiftUnlocked() ? 'unlocked' : ''));
     if (state.guestToken) fd.append('guest_token', state.guestToken);
     fd.append('card', blob, 'kartu-ucapan.png');

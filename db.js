@@ -51,6 +51,16 @@ CREATE INDEX IF NOT EXISTS idx_greetings_status_created ON greetings(status, cre
   console.warn('Migrasi DB frame6-10 dilewati:', e.message);
 }
 
+try {
+  const cols = db.prepare('PRAGMA table_info(greetings)').all();
+  if (!cols.some((c) => c.name === 'font_id')) {
+    db.exec("ALTER TABLE greetings ADD COLUMN font_id TEXT NOT NULL DEFAULT 'cormorant'");
+    console.log('Migrasi DB: kolom font_id ditambah.');
+  }
+} catch (e) {
+  console.warn('Migrasi DB font_id dilewati:', e.message);
+}
+
 // Seed tabel frames (id -> file publik + label)
 const seedFrames = [
   ['frame1', '/frames/frame1.png', 'Emas Elegan'],
@@ -70,13 +80,21 @@ const insertFrame = db.prepare(
 for (const f of seedFrames) insertFrame.run(...f);
 
 export const FRAME_IDS = ['frame1', 'frame2', 'frame3', 'frame4', 'frame5', 'frame6', 'frame7', 'frame8', 'frame9', 'frame10'];
+export const FONT_IDS = ['cormorant', 'vibes', 'dancing', 'playfair', 'merriweather', 'jost'];
 
-export function insertGreeting({ sender_name, message, frame_id, card_image_path, guest_token }) {
+export function insertGreeting({ sender_name, message, frame_id, card_image_path, guest_token, font_id }) {
   const stmt = db.prepare(
-    `INSERT INTO greetings (sender_name, message, frame_id, card_image_path, guest_token, status)
-     VALUES (?, ?, ?, ?, ?, 'pending')`
+    `INSERT INTO greetings (sender_name, message, frame_id, card_image_path, guest_token, status, font_id)
+     VALUES (?, ?, ?, ?, ?, 'pending', ?)`
   );
-  const res = stmt.run(sender_name, message, frame_id, card_image_path || null, guest_token || null);
+  const res = stmt.run(
+    sender_name,
+    message,
+    frame_id,
+    card_image_path || null,
+    guest_token || null,
+    FONT_IDS.includes(font_id) ? font_id : 'cormorant'
+  );
   return Number(res.lastInsertRowid);
 }
 
@@ -84,7 +102,7 @@ export function listGreetings({ status = 'approved', page = 1, limit = 12 } = {}
   const offset = (Math.max(1, page) - 1) * limit;
   const rows = db
     .prepare(
-      `SELECT id, sender_name, message, frame_id, card_image_path, status, created_at
+      `SELECT id, sender_name, message, frame_id, font_id, card_image_path, status, created_at
        FROM greetings WHERE status = ? ORDER BY id DESC LIMIT ? OFFSET ?`
     )
     .all(status, limit, offset);
@@ -96,26 +114,28 @@ export function listGreetings({ status = 'approved', page = 1, limit = 12 } = {}
 
 export function getGreeting(id) {
   return db.prepare(
-    `SELECT id, sender_name, message, frame_id, card_image_path, status, created_at
+    `SELECT id, sender_name, message, frame_id, font_id, card_image_path, status, created_at
      FROM greetings WHERE id = ?`
   ).get(id);
 }
 
-export function updateGreeting(id, { sender_name, message, frame_id }) {
+export function updateGreeting(id, { sender_name, message, frame_id, font_id }) {
   const cur = getGreeting(id);
   if (!cur) return 0;
   const next = {
     sender_name: sender_name !== undefined ? String(sender_name).trim().slice(0, 100) : cur.sender_name,
     message: message !== undefined ? String(message).trim().slice(0, 500) : cur.message,
     frame_id: frame_id !== undefined ? frame_id : cur.frame_id,
+    font_id: font_id !== undefined ? font_id : (cur.font_id || 'cormorant'),
   };
   if (!next.sender_name) throw new Error('Nama pengirim wajib diisi.');
   if (!next.message) throw new Error('Ucapan wajib diisi.');
   if (next.message.length > 500) throw new Error('Ucapan maksimal 500 karakter.');
   if (!FRAME_IDS.includes(next.frame_id)) throw new Error('frame_id tidak valid.');
+  if (!FONT_IDS.includes(next.font_id)) throw new Error('font_id tidak valid.');
   const info = db
-    .prepare(`UPDATE greetings SET sender_name = ?, message = ?, frame_id = ? WHERE id = ?`)
-    .run(next.sender_name, next.message, next.frame_id, id);
+    .prepare(`UPDATE greetings SET sender_name = ?, message = ?, frame_id = ?, font_id = ? WHERE id = ?`)
+    .run(next.sender_name, next.message, next.frame_id, next.font_id, id);
   return info.changes;
 }
 
