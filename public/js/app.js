@@ -1,15 +1,17 @@
 // Kartu ucapan: pilih bingkai, overlay teks, kirim.
+// box = area ucapan (di bawah nama mempelai, di atas label "Dari:").
+// nameX/nameY = nama pengirim, tepat di bawah "Dari:".
 const FRAMES = {
-  frame1: { src: '/frames/frame1.png', label: 'Emas Floral', box: { x: 0.18, y: 0.34, w: 0.64, h: 0.38 }, nameX: 0.50, nameY: 0.815, ink: '#8a7348' },
-  frame2: { src: '/frames/frame2.png', label: 'Mawar Putih', box: { x: 0.24, y: 0.30, w: 0.52, h: 0.38 }, nameX: 0.50, nameY: 0.815, ink: '#8a7348' },
-  frame3: { src: '/frames/frame3.png', label: 'Lily Putih', box: { x: 0.20, y: 0.32, w: 0.60, h: 0.38 }, nameX: 0.50, nameY: 0.815, ink: '#2f6b45' },
-  frame4: { src: '/frames/frame4.png', label: 'Blush Mawar', box: { x: 0.22, y: 0.32, w: 0.56, h: 0.38 }, nameX: 0.50, nameY: 0.815, ink: '#a68455' },
-  frame5: { src: '/frames/frame5.png', label: 'Emas Barok', box: { x: 0.18, y: 0.30, w: 0.64, h: 0.36 }, nameX: 0.50, nameY: 0.785, ink: '#a68455' },
-  frame6: { src: '/frames/frame6.png', label: 'Satin Lily', box: { x: 0.10, y: 0.34, w: 0.48, h: 0.34 }, nameX: 0.22, nameY: 0.815, ink: '#8a4a55' },
-  frame7: { src: '/frames/frame7.png', label: 'Tulip Pink', box: { x: 0.22, y: 0.30, w: 0.56, h: 0.36 }, nameX: 0.50, nameY: 0.785, ink: '#7a2a55' },
-  frame8: { src: '/frames/frame8.png', label: 'Marble Rose', box: { x: 0.36, y: 0.30, w: 0.52, h: 0.38 }, nameX: 0.42, nameY: 0.785, ink: '#7a2a55' },
-  frame9: { src: '/frames/frame9.png', label: 'Kartu Kayu', box: { x: 0.28, y: 0.32, w: 0.44, h: 0.32 }, nameX: 0.50, nameY: 0.745, ink: '#a68455' },
-  frame10: { src: '/frames/frame10.png', label: 'Anggrek Pink', box: { x: 0.22, y: 0.30, w: 0.56, h: 0.34 }, nameX: 0.50, nameY: 0.765, ink: '#7a2a55' }
+  frame1: { src: '/frames/frame1.png', label: 'Emas Floral', box: { x: 0.18, y: 0.36, w: 0.64, h: 0.36 }, nameX: 0.50, nameY: 0.86, ink: '#8a7348' },
+  frame2: { src: '/frames/frame2.png', label: 'Mawar Putih', box: { x: 0.24, y: 0.34, w: 0.52, h: 0.32 }, nameX: 0.50, nameY: 0.80, ink: '#8a7348' },
+  frame3: { src: '/frames/frame3.png', label: 'Lily Putih', box: { x: 0.20, y: 0.34, w: 0.60, h: 0.33 }, nameX: 0.50, nameY: 0.82, ink: '#2f6b45' },
+  frame4: { src: '/frames/frame4.png', label: 'Blush Mawar', box: { x: 0.22, y: 0.36, w: 0.56, h: 0.36 }, nameX: 0.50, nameY: 0.86, ink: '#a68455' },
+  frame5: { src: '/frames/frame5.png', label: 'Emas Barok', box: { x: 0.16, y: 0.30, w: 0.68, h: 0.40 }, nameX: 0.50, nameY: 0.84, ink: '#a68455' },
+  frame6: { src: '/frames/frame6.png', label: 'Satin Lily', box: { x: 0.05, y: 0.28, w: 0.42, h: 0.40 }, nameX: 0.10, nameY: 0.88, nameAlign: 'left', ink: '#8a4a55' },
+  frame7: { src: '/frames/frame7.png', label: 'Tulip Pink', box: { x: 0.20, y: 0.34, w: 0.60, h: 0.30 }, nameX: 0.50, nameY: 0.78, ink: '#7a2a55' },
+  frame8: { src: '/frames/frame8.png', label: 'Marble Rose', box: { x: 0.46, y: 0.28, w: 0.46, h: 0.36 }, nameX: 0.47, nameY: 0.86, ink: '#7a2a55' },
+  frame9: { src: '/frames/frame9.png', label: 'Kartu Kayu', box: { x: 0.30, y: 0.36, w: 0.40, h: 0.28 }, nameX: 0.50, nameY: 0.80, ink: '#a68455' },
+  frame10: { src: '/frames/frame10.png', label: 'Anggrek Pink', box: { x: 0.22, y: 0.34, w: 0.56, h: 0.28 }, nameX: 0.50, nameY: 0.78, ink: '#7a2a55' }
 };
 
 const state = { frameId: 'frame1', fontId: 'cormorant', message: '', name: '', guestToken: '', giftProof: '', payToken: '' };
@@ -353,15 +355,24 @@ async function renderCard(exportWidth) {
     y += fs * 1.45;
   }
 
-  const nameFs = Math.max(Math.round(W * 0.028), Math.round(fs * 0.95));
+  const nameFs = Math.max(Math.round(W * 0.024), Math.round(fs * 0.85));
   ctx.font = fontSpec(nameFs, true);
   ctx.lineWidth = Math.max(2, Math.round(nameFs / 12));
-  const rawName = (state.name || 'Nama Pengirim').slice(0, 100);
-  const nameText = rawName;
-  const nx = (cfg.nameX || 0.5) * W;
+  const rawName = (state.name || 'Nama Pengirim').slice(0, 40);
+  const nameAlign = cfg.nameAlign || 'center';
+  ctx.textAlign = nameAlign;
+  let nx = (cfg.nameX || 0.5) * W;
   const ny = (cfg.nameY || 0.8) * H;
+  const nameMax = (cfg.nameMaxW || (nameAlign === 'left' ? 0.34 : 0.55)) * W;
+  let nameText = rawName;
+  while (nameText.length > 1 && ctx.measureText(nameText).width > nameMax) {
+    nameText = nameText.slice(0, -1);
+  }
+  if (nameText !== rawName) nameText = nameText.replace(/\s+\S*$/, '') + '…';
+  if (nameAlign === 'left') nx = Math.max(nx, 16);
   ctx.strokeText(nameText, nx, ny);
   ctx.fillText(nameText, nx, ny);
+  ctx.textAlign = 'center';
 
   $('btnDownload').href = canvas.toDataURL('image/png');
   return canvas;
