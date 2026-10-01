@@ -29,6 +29,10 @@ const $ = (id) => document.getElementById(id);
   const q = new URLSearchParams(location.search);
   const to = (q.get('to') || '').trim();
   if (to) {
+    const guest = $('guestName');
+    const inner = $('guestNameInner');
+    if (guest) guest.textContent = to;
+    if (inner) inner.textContent = to;
     const nameInput = $('inpName');
     if (nameInput && !nameInput.value) {
       nameInput.value = to;
@@ -148,13 +152,8 @@ async function loadPublicSettings() {
     if (!res.ok) return;
     const s = await res.json();
     const set = (id, val) => { const el = $(id); if (el && val) el.textContent = val; };
-    set('coverKicker', s.cover_title);
     set('coverNames', s.couple_names);
-    set('coverDate', s.wedding_date);
-    set('heroKicker', s.hero_kicker);
     set('heroNames', s.couple_names);
-    set('heroDate', s.wedding_date);
-    set('heroLead', s.hero_lead);
     set('footNames', s.couple_names);
     set('priceAmount', s.price_amount);
     if (s.bank1_name) {
