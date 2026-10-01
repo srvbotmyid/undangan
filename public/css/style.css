@@ -202,7 +202,26 @@ footer { text-align: center; color: var(--muted); padding: 28px 12px 60px; font-
   color: var(--ink);
   margin: 18px 8px 6px;
 }
-.hero-guest {
+.hero-date,
+.cover-date {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  margin: 6px 0 10px;
+}
+.hero-lead { color: var(--muted); margin: 8px 12px 20px; line-height: 1.6; }
+.price-line {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 36px;
+  margin: 8px 0 16px;
+  color: var(--ink);
+}
+.bank-block { margin: 12px 0 16px; }
+.pay-form { text-align: left; margin-top: 12px; }
+.pay-form select, .pay-form input[type="file"] { width: 100%; margin: 0 0 12px; }
+.theme-undangan #panelSettings input,
+.theme-undangan #panelSettings textarea { margin-bottom: 10px; }
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 24px;
   font-weight: 600;

@@ -9,7 +9,7 @@
 <body>
   <nav class="topnav">
     <a href="/">Nara &amp; Ilyas</a>
-    <div class="links"><a href="/gift">Amplop</a><a href="/galeri">Galeri</a><a href="/admin">Admin</a></div>
+    <div class="links"><a href="/galeri">Galeri</a><a href="/admin">Admin</a></div>
   </nav>
   <main class="wrap">
     <div class="card" id="loginCard">
@@ -20,12 +20,19 @@
     </div>
 
     <div class="card" id="dashCard" style="display:none">
+      <div class="tabs" id="mainTabs">
+        <button class="btn btn-small active" data-panel="greetings" type="button">Ucapan</button>
+        <button class="btn btn-small" data-panel="payments" type="button">Pembayaran</button>
+        <button class="btn btn-small" data-panel="settings" type="button">Pengaturan</button>
+        <button class="btn btn-small btn-ghost" id="btnLogout" style="margin-left:auto" type="button">Keluar</button>
+      </div>
+
+      <div id="panelGreetings">
       <h2>Moderasi <span id="stats"></span></h2>
       <div class="tabs">
-        <button class="btn btn-small active" data-tab="pending">Menunggu</button>
-        <button class="btn btn-small" data-tab="approved">Disetujui</button>
-        <button class="btn btn-small" data-tab="rejected">Ditolak</button>
-        <button class="btn btn-small btn-ghost" id="btnLogout" style="margin-left:auto">Keluar</button>
+        <button class="btn btn-small active" data-tab="pending" type="button">Menunggu</button>
+        <button class="btn btn-small" data-tab="approved" type="button">Disetujui</button>
+        <button class="btn btn-small" data-tab="rejected" type="button">Ditolak</button>
       </div>
       <div class="card" id="editCard" style="display:none;background:#fffdf6">
         <h2 style="margin-top:0">Ubah ucapan <span id="editId"></span></h2>
@@ -60,7 +67,65 @@
         <tbody id="rows"></tbody>
       </table>
       </div>
-      <div class="actions"><button class="btn" id="btnMoreAdmin">Muat lagi</button></div>
+      <div class="actions"><button class="btn" id="btnMoreAdmin" type="button">Muat lagi</button></div>
+      </div>
+
+      <div id="panelPayments" style="display:none">
+        <h2>Pembayaran <span id="payStats"></span></h2>
+        <div class="tabs">
+          <button class="btn btn-small active" data-paytab="pending" type="button">Menunggu</button>
+          <button class="btn btn-small" data-paytab="approved" type="button">Disetujui</button>
+          <button class="btn btn-small" data-paytab="rejected" type="button">Ditolak</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="table">
+            <thead><tr><th>ID</th><th>Pengirim</th><th>Nominal</th><th>Bukti</th><th>Aksi</th></tr></thead>
+            <tbody id="payRows"></tbody>
+          </table>
+        </div>
+        <div class="actions"><button class="btn" id="btnMorePay" type="button">Muat lagi</button></div>
+      </div>
+
+      <div id="panelSettings" style="display:none">
+        <h2>Pengaturan</h2>
+        <label class="lbl" for="setCover">Judul cover</label>
+        <input type="text" id="setCover" />
+        <label class="lbl" for="setNames">Nama pasangan</label>
+        <input type="text" id="setNames" />
+        <label class="lbl" for="setDate">Tanggal</label>
+        <input type="text" id="setDate" />
+        <label class="lbl" for="setKicker">Kicker hero</label>
+        <input type="text" id="setKicker" />
+        <label class="lbl" for="setLead">Teks pengantar</label>
+        <textarea id="setLead" rows="3"></textarea>
+        <label class="lbl" for="setPrice">Harga (contoh 500.000)</label>
+        <input type="text" id="setPrice" />
+        <div class="bank-block">
+          <p class="bank">Rekening 1</p>
+          <input type="text" id="setB1Bank" placeholder="Bank" />
+          <input type="text" id="setB1Name" placeholder="Nama" />
+          <input type="text" id="setB1No" placeholder="Nomor" />
+        </div>
+        <div class="bank-block">
+          <p class="bank">Rekening 2</p>
+          <input type="text" id="setB2Bank" placeholder="Bank" />
+          <input type="text" id="setB2Name" placeholder="Nama" />
+          <input type="text" id="setB2No" placeholder="Nomor" />
+        </div>
+        <label class="lbl" for="setQris">Gambar QRIS</label>
+        <input type="file" id="setQris" accept="image/png,image/jpeg,image/webp" />
+        <img class="qris" id="setQrisPreview" alt="" style="display:none" />
+        <label class="lbl"><input type="checkbox" id="setTgOn" /> Aktifkan Telegram</label>
+        <label class="lbl" for="setTgToken">Bot token</label>
+        <input type="password" id="setTgToken" autocomplete="off" />
+        <label class="lbl" for="setTgChat">Chat ID</label>
+        <input type="text" id="setTgChat" />
+        <div class="actions">
+          <button class="btn btn-primary" id="btnSaveSettings" type="button">Simpan pengaturan</button>
+          <button class="btn" id="btnTestTg" type="button">Tes Telegram</button>
+        </div>
+        <div class="notice" id="setNotice"></div>
+      </div>
     </div>
   </main>
   <script src="/js/admin.js" type="module"></script>

@@ -12,7 +12,7 @@ const FRAMES = {
   frame10: { src: '/frames/frame10.png', label: 'Marble Rose', box: { x: 0.38, y: 0.25, w: 0.54, h: 0.48 }, nameY: 0.82, ink: '#6b5433' }
 };
 
-const state = { frameId: 'frame1', fontId: 'cormorant', message: '', name: '', guestToken: '', giftProof: '' };
+const state = { frameId: 'frame1', fontId: 'cormorant', message: '', name: '', guestToken: '', giftProof: '', payToken: '' };
 
 const FONTS = {
   cormorant: { label: 'Elegan', family: '"Cormorant Garamond", Georgia, serif', style: 'italic 600' },
@@ -29,9 +29,6 @@ const $ = (id) => document.getElementById(id);
   const q = new URLSearchParams(location.search);
   const to = (q.get('to') || '').trim();
   if (to) {
-    $('guestName').textContent = to;
-    const inner = $('guestNameInner');
-    if (inner) inner.textContent = to;
     const nameInput = $('inpName');
     if (nameInput && !nameInput.value) {
       nameInput.value = to;
@@ -50,40 +47,145 @@ document.querySelectorAll('[data-copy]').forEach((btn) => {
       btn.textContent = 'Tersalin';
       setTimeout(() => (btn.textContent = 'Salin'), 1500);
     } catch (e) { prompt('Salin nomor ini:', text); }
-    unlockGift('copy:' + id);
   });
 });
 
-const GIFT_KEY = 'gift_unlocked';
+const PAY_KEY = 'pay_access_token';
+let pollTimer = null;
+
+function readPayToken() {
+  try { return sessionStorage.getItem(PAY_KEY) || ''; } catch { return ''; }
+}
+function savePayToken(token) {
+  state.payToken = token;
+  try { sessionStorage.setItem(PAY_KEY, token); } catch {}
+}
 function isGiftUnlocked() {
-  try { return localStorage.getItem(GIFT_KEY) === '1'; } catch { return false; }
+  return state.giftProof === 'approved';
 }
 function applyGiftLock() {
   const form = $('form');
-  const status = $('giftStatus');
   const open = isGiftUnlocked();
   if (form) form.classList.toggle('hide-lock', open);
-  if (status) {
-    if (open) {
-      status.style.display = 'block';
-      status.textContent = 'Silakan tulis ucapan di bawah.';
-    } else {
-      status.style.display = 'none';
-    }
+  const hint = $('lockHint');
+  if (hint && !open) {
+    hint.textContent = state.payToken
+      ? 'Bukti sudah dikirim. Menunggu persetujuan admin.'
+      : 'Unggah bukti transfer dan tunggu persetujuan admin.';
   }
 }
-function unlockGift(source) {
-  try { localStorage.setItem(GIFT_KEY, '1'); } catch {}
-  state.giftProof = (source || 'manual').slice(0, 50);
+function unlockGift() {
+  state.giftProof = 'approved';
   applyGiftLock();
   const form = $('form');
-  if (form && !form.classList.contains('scrolled-once')) {
-    form.classList.add('scrolled-once');
-    setTimeout(() => form.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+  const wait = $('payWait');
+  if (wait) {
+    wait.style.display = 'block';
+    wait.textContent = 'Pembayaran disetujui. Silakan tulis ucapan di bawah.';
   }
+  if (form) setTimeout(() => form.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
 }
-$('btnGiftDone')?.addEventListener('click', () => unlockGift('button'));
+function payNotice(msg, type) {
+  const el = $('payNotice');
+  if (!el) return;
+  el.className = 'notice ' + (type || 'ok');
+  el.textContent = msg;
+}
+async function pollPayment() {
+  if (!state.payToken || isGiftUnlocked()) return;
+  try {
+    const res = await fetch('/api/payments/status/' + encodeURIComponent(state.payToken));
+    const data = await res.json();
+    if (!res.ok) return;
+    const wait = $('payWait');
+    if (data.status === 'approved') {
+      if (pollTimer) clearInterval(pollTimer);
+      unlockGift();
+      return;
+    }
+    if (wait) {
+      wait.style.display = 'block';
+      wait.className = 'notice ' + (data.status === 'rejected' ? 'err' : 'ok');
+      wait.textContent = data.status === 'rejected'
+        ? 'Bukti ditolak. Unggah ulang bukti transfer yang jelas.'
+        : 'Menunggu verifikasi admin. Halaman ini akan terbuka otomatis.';
+    }
+  } catch { /* coba lagi di tick berikutnya */ }
+}
+$('payForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('btnPaySubmit');
+  const name = $('payerName')?.value?.trim() || '';
+  const file = $('proofFile')?.files?.[0];
+  if (!name) { payNotice('Nama pengirim wajib diisi.', 'err'); return; }
+  if (!file) { payNotice('Foto bukti transfer wajib diunggah.', 'err'); return; }
+  try {
+    btn.disabled = true;
+    btn.textContent = 'Mengirim...';
+    const fd = new FormData();
+    fd.append('payer_name', name);
+    fd.append('bank_target', $('bankTarget')?.value || '');
+    fd.append('proof', file);
+    const res = await fetch('/api/payments/submit', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal mengirim bukti.');
+    savePayToken(data.token);
+    payNotice('Bukti terkirim. Menunggu persetujuan admin.', 'ok');
+    applyGiftLock();
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(pollPayment, 4000);
+    pollPayment();
+  } catch (err) {
+    payNotice(err.message || 'Gagal mengirim bukti.', 'err');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Kirim Bukti';
+});
+
+async function loadPublicSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    if (!res.ok) return;
+    const s = await res.json();
+    const set = (id, val) => { const el = $(id); if (el && val) el.textContent = val; };
+    set('coverKicker', s.cover_title);
+    set('coverNames', s.couple_names);
+    set('coverDate', s.wedding_date);
+    set('heroKicker', s.hero_kicker);
+    set('heroNames', s.couple_names);
+    set('heroDate', s.wedding_date);
+    set('heroLead', s.hero_lead);
+    set('footNames', s.couple_names);
+    set('priceAmount', s.price_amount);
+    if (s.bank1_name) {
+      const label = $('bank1Label');
+      if (label) label.textContent = (s.bank1_bank || 'BCA') + ' · a.n. ' + s.bank1_name;
+      set('rek1', s.bank1_number);
+      const opt = $('bankTarget')?.options?.[0];
+      if (opt) { opt.value = (s.bank1_bank || 'BCA') + ' ' + s.bank1_name; opt.textContent = (s.bank1_bank || 'BCA') + ' · ' + s.bank1_name; }
+    }
+    if (s.bank2_name) {
+      const label = $('bank2Label');
+      if (label) label.textContent = (s.bank2_bank || 'BCA') + ' · a.n. ' + s.bank2_name;
+      set('rek2', s.bank2_number);
+      const opt = $('bankTarget')?.options?.[1];
+      if (opt) { opt.value = (s.bank2_bank || 'BCA') + ' ' + s.bank2_name; opt.textContent = (s.bank2_bank || 'BCA') + ' · ' + s.bank2_name; }
+    }
+    if (s.qris_image_path) {
+      const img = $('qrisImg');
+      if (img) { img.src = s.qris_image_path; img.style.display = 'block'; }
+    }
+    document.title = s.cover_title || s.couple_names || document.title;
+  } catch { /* pakai teks default di HTML */ }
+}
+
+state.payToken = readPayToken();
 applyGiftLock();
+loadPublicSettings();
+if (state.payToken) {
+  pollTimer = setInterval(pollPayment, 4000);
+  pollPayment();
+}
 
 (function renderPicker() {
   const grid = $('frameGrid');
@@ -252,13 +354,19 @@ async function renderCard(exportWidth) {
     y += fs * 1.45;
   }
 
-  const nameFs = Math.max(Math.round(W * 0.016), Math.round(fs * 0.62));
+  const nameFs = Math.max(Math.round(W * 0.028), Math.round(fs * 0.95));
   ctx.font = fontSpec(nameFs, true);
-  ctx.lineWidth = Math.max(2, Math.round(nameFs / 10));
-  const nameText = (state.name || 'Nama Pengirim').slice(0, 100);
+  ctx.lineWidth = Math.max(2, Math.round(nameFs / 12));
+  const rawName = (state.name || 'Nama Pengirim').slice(0, 100);
+  const nameText = rawName;
   const ny = (cfg.nameY || 0.8) * H;
   ctx.strokeText(nameText, W / 2, ny);
   ctx.fillText(nameText, W / 2, ny);
+  const fromFs = Math.max(12, Math.round(nameFs * 0.32));
+  ctx.font = '500 ' + fromFs + 'px "Jost", sans-serif';
+  ctx.lineWidth = 1;
+  ctx.strokeText('Dari', W / 2, ny - nameFs * 1.15);
+  ctx.fillText('Dari', W / 2, ny - nameFs * 1.15);
 
   $('btnDownload').href = canvas.toDataURL('image/png');
   return canvas;
@@ -332,7 +440,7 @@ loadWishes();
 $('btnSubmit').addEventListener('click', async () => {
   const btn = $('btnSubmit');
   try {
-    if (!isGiftUnlocked()) { notice('Salin rekening di atas dulu, atau tekan lanjut.', 'err'); document.getElementById('giftGate')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    if (!isGiftUnlocked()) { notice('Kartu masih terkunci. Tunggu persetujuan pembayaran.', 'err'); document.getElementById('giftGate')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (!state.message.trim()) { notice('Ucapan wajib diisi.', 'err'); return; }
     if (!state.name.trim()) { notice('Nama pengirim wajib diisi.', 'err'); return; }
     btn.disabled = true;

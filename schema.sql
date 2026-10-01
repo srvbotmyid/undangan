@@ -22,4 +22,26 @@ CREATE TABLE IF NOT EXISTS frames (
   label TEXT NOT NULL
 );
 
--- Seed 5 frame (dijalankan dengan INSERT OR IGNORE dari db.js)
+-- Pengaturan dinamis sistem (rekening, harga, teks, bot telegram, qris)
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+-- Pembayaran / transfer masuk untuk membuka template ucapan
+CREATE TABLE IF NOT EXISTS payments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  payer_name VARCHAR(100) NOT NULL,
+  amount TEXT NOT NULL DEFAULT '500.000',
+  bank_target TEXT NOT NULL DEFAULT 'BCA',
+  proof_image_path TEXT NOT NULL,
+  access_token TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+  note TEXT,
+  created_at DATETIME DEFAULT (datetime('now','localtime')),
+  reviewed_at DATETIME,
+  reviewed_by TEXT DEFAULT 'admin'
+);
+CREATE INDEX IF NOT EXISTS idx_payments_token ON payments(access_token);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status, created_at DESC);
+

@@ -6,7 +6,27 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { db, FRAME_IDS, FONT_IDS, insertGreeting, listGreetings, getStats, setStatus, deleteGreeting, updateGreeting } from './db.js';
+import {
+  db,
+  FRAME_IDS,
+  FONT_IDS,
+  insertGreeting,
+  listGreetings,
+  getStats,
+  setStatus,
+  deleteGreeting,
+  updateGreeting,
+  getAllSettings,
+  getPublicSettings,
+  updateSettings,
+  insertPayment,
+  getPaymentByToken,
+  getPaymentById,
+  listPayments,
+  setPaymentStatus,
+  deletePayment,
+  getPaymentStats,
+} from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -68,6 +88,86 @@ const upload = multer({
   },
 });
 
+// Storage untuk Bukti Transfer
+const proofDir = path.join(__dirname, 'uploads', 'proofs');
+fs.mkdirSync(proofDir, { recursive: true });
+const proofStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, proofDir),
+  filename: (_req, file, cb) => {
+    const ext = (path.extname(file.originalname || '') || '.jpg').toLowerCase();
+    const safe = ['.png', '.jpg', '.jpeg', '.webp'].includes(ext) ? ext : '.jpg';
+    cb(null, `proof-${Date.now()}-${crypto.randomUUID().slice(0, 8)}${safe}`);
+  },
+});
+const uploadProof = multer({
+  storage: proofStorage,
+  limits: { fileSize: 8 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    if (/^image\/(png|jpeg|webp)$/.test(file.mimetype)) cb(null, true);
+    else cb(new Error('File bukti transfer harus format PNG/JPG/WebP'));
+  },
+});
+
+// Storage untuk QRIS Admin
+const qrisDir = path.join(__dirname, 'uploads', 'qris');
+fs.mkdirSync(qrisDir, { recursive: true });
+const qrisStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, qrisDir),
+  filename: (_req, file, cb) => {
+    const ext = (path.extname(file.originalname || '') || '.png').toLowerCase();
+    const safe = ['.png', '.jpg', '.jpeg', '.webp'].includes(ext) ? ext : '.png';
+    cb(null, `qris-${Date.now()}${safe}`);
+  },
+});
+const uploadQris = multer({
+  storage: qrisStorage,
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    if (/^image\/(png|jpeg|webp)$/.test(file.mimetype)) cb(null, true);
+    else cb(new Error('File QRIS harus gambar PNG/JPG/WebP'));
+  },
+});
+
+// Helper Kirim Notifikasi Telegram
+async function notifyTelegram({ title, message, photoPath }) {
+  const cfg = getAllSettings();
+  const token = (process.env.TELEGRAM_BOT_TOKEN || cfg.telegram_bot_token || '').trim();
+  const chatId = (process.env.TELEGRAM_CHAT_ID || cfg.telegram_chat_id || '').trim();
+  const enabled = cfg.telegram_enabled === '1' || Boolean(process.env.TELEGRAM_BOT_TOKEN);
+  if (!enabled || !token || !chatId) return { ok: false, reason: 'Telegram belum aktif atau token kosong' };
+
+  try {
+    const caption = `<b>${title}</b>\n\n${message}`;
+    if (photoPath && fs.existsSync(photoPath)) {
+      const form = new FormData();
+      form.append('chat_id', chatId);
+      form.append('caption', caption);
+      form.append('parse_mode', 'HTML');
+      const fileBytes = fs.readFileSync(photoPath);
+      const blob = new Blob([fileBytes]);
+      form.append('photo', blob, path.basename(photoPath));
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+        method: 'POST',
+        body: form,
+      });
+      const data = await res.json();
+      return { ok: data.ok, data };
+    } else {
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: caption, parse_mode: 'HTML' }),
+      });
+      const data = await res.json();
+      return { ok: data.ok, data };
+    }
+  } catch (err) {
+    console.warn('Gagal kirim notif telegram:', err.message);
+    return { ok: false, error: err.message };
+  }
+}
+
+
 function validateGreeting({ sender_name, message, frame_id, font_id }) {
   const errors = [];
   if (!sender_name || !String(sender_name).trim()) errors.push('Nama pengirim wajib diisi.');
@@ -94,6 +194,65 @@ app.get('/api/greetings', (req, res) => {
   const data = listGreetings({ status: 'approved', page, limit });
   res.json({ ...data, totalPages: Math.ceil(data.total / limit) });
 });
+app.get('/api/settings', (_req, res) => {
+  res.json(getPublicSettings());
+});
+
+app.post('/api/payments/submit', rateLimit, uploadProof.single('proof'), async (req, res) => {
+  try {
+    const bb = req.body || {};
+    const payer_name = String(bb.payer_name || '').trim();
+    if (!payer_name) {
+      if (req.file) fs.unlink(req.file.path, () => {});
+      return res.status(400).json({ error: 'Nama pengirim / pemilik rekening wajib diisi.' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'Foto bukti transfer wajib diunggah.' });
+    }
+    const token = crypto.randomUUID();
+    const settings = getAllSettings();
+    const proof_image_path = '/uploads/proofs/' + req.file.filename;
+    const paymentId = insertPayment({
+      payer_name,
+      amount: settings.price_amount || '500.000',
+      bank_target: bb.bank_target || 'BCA',
+      proof_image_path,
+      access_token: token,
+      note: bb.note || '',
+    });
+
+    // Kirim notifikasi bot Telegram jika aktif
+    notifyTelegram({
+      title: '🔔 Pembayaran Masuk (Rp ' + (settings.price_amount || '500.000') + ')',
+      message: `ID: #${paymentId}\nNama Pengirim: <b>${payer_name}</b>\nTujuan: <b>${bb.bank_target || 'BCA'}</b>\nWaktu: ${new Date().toLocaleString('id-ID')}\n\nSilakan cek panel /admin untuk verifikasi.`,
+      photoPath: req.file.path,
+    }).catch(() => {});
+
+    res.status(201).json({
+      ok: true,
+      token,
+      message: 'Bukti transfer berhasil dikirim. Menunggu verifikasi admin.',
+    });
+  } catch (err) {
+    console.error('Submit payment error:', err);
+    res.status(500).json({ error: 'Gagal mengirim bukti transfer.' });
+  }
+});
+
+app.get('/api/payments/status/:token', (req, res) => {
+  const token = String(req.params.token || '');
+  if (!token) return res.status(400).json({ error: 'Token diperlukan.' });
+  const row = getPaymentByToken(token);
+  if (!row) return res.status(404).json({ error: 'Data pembayaran tidak ditemukan.' });
+  res.json({
+    status: row.status,
+    payer_name: row.payer_name,
+    amount: row.amount,
+    created_at: row.created_at,
+    reviewed_at: row.reviewed_at,
+  });
+});
+
 
 
 // --- Auth admin: password tunggal, token disimpan di data/admin-tokens.json ---
@@ -230,6 +389,68 @@ app.delete('/api/admin/greetings/:id', requireAdmin, (req, res) => {
   }
   res.json({ ok: true });
 });
+// --- Admin: Settings API ---
+app.get('/api/admin/settings', requireAdmin, (_req, res) => {
+  res.json(getAllSettings());
+});
+
+app.post('/api/admin/settings', requireAdmin, (req, res) => {
+  try {
+    const updated = updateSettings(req.body || {});
+    res.json({ ok: true, settings: updated });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/upload-qris', requireAdmin, uploadQris.single('qris'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'File QRIS wajib diunggah.' });
+  const qrisPath = '/uploads/qris/' + req.file.filename;
+  updateSettings({ qris_image_path: qrisPath });
+  res.json({ ok: true, qris_url: qrisPath });
+});
+
+app.post('/api/admin/telegram/test', requireAdmin, async (_req, res) => {
+  const result = await notifyTelegram({
+    title: '🔔 Tes Notifikasi Undangan Digital',
+    message: 'Koneksi bot Telegram berhasil terhubung!\nPanel Admin siap menerima bukti pembayaran.',
+  });
+  if (result.ok) res.json({ ok: true, message: 'Pesan tes berhasil dikirim ke Telegram.' });
+  else res.status(400).json({ error: result.reason || result.error || 'Gagal mengirim pesan ke Telegram.' });
+});
+
+// --- Admin: Payments Moderation API ---
+app.get('/api/admin/payments', requireAdmin, (req, res) => {
+  const status = String(req.query.status || 'pending');
+  const page = Math.max(1, Number(req.query.page || 1));
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit || 20)));
+  const data = listPayments({ status, page, limit });
+  const stats = getPaymentStats();
+  res.json({ ...data, stats, totalPages: Math.ceil(data.total / limit) });
+});
+
+app.patch('/api/admin/payments/:id', requireAdmin, (req, res) => {
+  const { status } = req.body || {};
+  try {
+    const id = Number(req.params.id);
+    const changes = setPaymentStatus(id, status);
+    if (!changes) return res.status(404).json({ error: 'Pembayaran tidak ditemukan.' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/payments/:id', requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  const row = deletePayment(id);
+  if (row && row.proof_image_path) {
+    const p = path.join(__dirname, row.proof_image_path.replace(/^\//, ''));
+    fs.unlink(p, () => {});
+  }
+  res.json({ ok: true });
+});
+
 
 app.get('/galeri', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'galeri.html')));
 app.get('/gift', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'gift.html')));

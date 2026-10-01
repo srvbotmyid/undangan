@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nara &amp; Ilyas</title>
+  <title>Ucapan Digital</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Dancing+Script:wght@500;600;700&family=Great+Vibes&family=Jost:wght@400;500;600&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet" />
@@ -12,45 +12,68 @@
 <body class="theme-undangan">
   <div class="cover" id="cover">
     <div class="cover-frame">
-      <p class="cover-kicker">Undangan Pernikahan</p>
-      <h1 class="cover-names">Nara &amp; Ilyas</h1>
+      <p class="cover-kicker" id="coverKicker">Ucapan Digital</p>
+      <h1 class="cover-names" id="coverNames">Nara &amp; Ilyas</h1>
       <div class="ornament" aria-hidden="true"><span></span></div>
-      <p class="cover-to">Kepada</p>
-      <div class="cover-guest" id="guestName">Tamu Undangan</div>
+      <p class="cover-date" id="coverDate">15 Agustus 2026</p>
       <button class="btn btn-primary cover-open" id="btnOpen" type="button">Buka Undangan</button>
     </div>
   </div>
 
   <main class="invite">
     <header class="invite-hero">
-      <p class="kicker">The Wedding of</p>
-      <h1>Nara &amp; Ilyas</h1>
+      <p class="kicker" id="heroKicker">The Wedding of</p>
+      <h1 id="heroNames">Nara &amp; Ilyas</h1>
       <div class="ornament" aria-hidden="true"><span></span></div>
-      <p class="cover-to">Kepada</p>
-      <p class="hero-guest" id="guestNameInner">Tamu Undangan</p>
-      <p class="ayat">Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan untukmu pasangan dari jenismu sendiri, supaya kamu merasa tenteram kepadanya, dan dijadikan-Nya di antaramu rasa kasih dan sayang.</p>
-      <p class="ayat-src">Ar-Rum: 21</p>
+      <p class="hero-date" id="heroDate">15 Agustus 2026</p>
+      <p class="hero-lead" id="heroLead">Tulis ucapan dan doa untuk kami. Kartu terbuka setelah transfer diverifikasi.</p>
     </header>
 
     <section class="card" id="giftGate">
-      <p class="kicker">Amplop Digital</p>
-      <h2>Tanda Kasih</h2>
-      <p class="muted">Doa restu Anda sudah lebih dari cukup. Kalau ingin mengirim tanda kasih, rekeningnya di bawah.</p>
-      <p class="bank">BCA · a.n. Nadita Ranasya</p>
-      <div class="gift-row">
-        <div><code id="rek1">7314191995</code></div>
-        <button class="btn btn-small" data-copy="rek1" type="button">Salin</button>
+      <p class="kicker">Pembayaran</p>
+      <h2>Buka Kartu Ucapan</h2>
+      <p class="muted" id="payIntro">Transfer sesuai nominal, lalu unggah bukti. Admin akan meninjau sebelum form dibuka.</p>
+      <p class="price-line">Rp <span id="priceAmount">500.000</span></p>
+
+      <div class="bank-block">
+        <p class="bank" id="bank1Label">BCA · a.n. Nadita Ranasya</p>
+        <div class="gift-row">
+          <div><code id="rek1">7314191995</code></div>
+          <button class="btn btn-small" data-copy="rek1" type="button">Salin</button>
+        </div>
       </div>
-      <div class="notice ok" id="giftStatus" style="display:none"></div>
-      <div class="actions" style="justify-content:center">
-        <button class="btn btn-primary" id="btnGiftDone" type="button">Lanjut isi ucapan</button>
+      <div class="bank-block">
+        <p class="bank" id="bank2Label">BCA · a.n. Ilyas Abdussalam</p>
+        <div class="gift-row">
+          <div><code id="rek2">7313160621</code></div>
+          <button class="btn btn-small" data-copy="rek2" type="button">Salin</button>
+        </div>
       </div>
+
+      <img class="qris" id="qrisImg" alt="QRIS" style="display:none" />
+
+      <form id="payForm" class="pay-form">
+        <label class="lbl" for="payerName">Nama pengirim</label>
+        <input type="text" id="payerName" maxlength="100" placeholder="Nama di rekening / bukti transfer" required />
+        <label class="lbl" for="bankTarget">Transfer ke</label>
+        <select id="bankTarget">
+          <option value="BCA Nadita Ranasya">BCA · Nadita Ranasya</option>
+          <option value="BCA Ilyas Abdussalam">BCA · Ilyas Abdussalam</option>
+        </select>
+        <label class="lbl" for="proofFile">Bukti transfer</label>
+        <input type="file" id="proofFile" accept="image/png,image/jpeg,image/webp" required />
+        <div class="actions" style="justify-content:center">
+          <button class="btn btn-primary" id="btnPaySubmit" type="submit">Kirim Bukti</button>
+        </div>
+      </form>
+      <div class="notice" id="payNotice"></div>
+      <div class="notice ok" id="payWait" style="display:none"></div>
     </section>
 
     <section class="card form-locked" id="form">
       <div class="lock-overlay" id="lockOverlay">
         <div>Kartu ucapan masih tertutup
-          <small>Salin nomor rekening di atas, atau tekan lanjut, untuk menulis ucapan.</small>
+          <small id="lockHint">Unggah bukti transfer dan tunggu persetujuan admin.</small>
         </div>
       </div>
       <div class="lockable">
@@ -62,7 +85,7 @@
         <div class="frame-grid" id="frameGrid" role="radiogroup" aria-label="Pilih bingkai"></div>
 
         <label class="lbl" for="inpMessage">Ucapan</label>
-        <textarea id="inpMessage" rows="5" maxlength="500" placeholder="Doa dan ucapan untuk Nara &amp; Ilyas. Tekan Enter untuk baris baru."></textarea>
+        <textarea id="inpMessage" rows="5" maxlength="500" placeholder="Doa dan ucapan. Tekan Enter untuk baris baru."></textarea>
         <div class="counter"><span id="charCount">0</span>/500</div>
 
         <label class="lbl">Font ucapan</label>
@@ -95,8 +118,8 @@
     <footer class="invite-foot">
       <p>Atas doa restunya, kami ucapkan terima kasih.</p>
       <p class="script-sign">Hormat kami</p>
-      <p class="cover-names foot-names">Nara &amp; Ilyas</p>
-      <p class="foot-links"><a href="/gift">Amplop</a> · <a href="/galeri">Galeri</a></p>
+      <p class="cover-names foot-names" id="footNames">Nara &amp; Ilyas</p>
+      <p class="foot-links"><a href="/galeri">Galeri</a></p>
     </footer>
   </main>
 

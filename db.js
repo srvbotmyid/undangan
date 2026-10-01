@@ -165,3 +165,120 @@ export function getStats() {
   }
   return stats;
 }
+
+// --- Pengaturan Dinamis (Settings) ---
+const DEFAULT_SETTINGS = {
+  cover_title: 'Ucapan Digital',
+  couple_names: 'Nara & Ilyas',
+  wedding_date: '15 Agustus 2026',
+  hero_kicker: 'The Wedding of',
+  hero_lead: 'Tulis ucapan dan doa untuk kami. Kartu terbuka setelah transfer diverifikasi.',
+  thank_note: 'Atas doa restunya, kami ucapkan terima kasih.',
+  bank1_bank: 'BCA',
+  bank1_name: 'Nadita Ranasya',
+  bank1_number: '7314191995',
+  bank2_bank: 'BCA',
+  bank2_name: 'Ilyas Abdussalam',
+  bank2_number: '7313160621',
+  price_amount: '500.000',
+  payment_note: 'Kirim tanda kasih Rp 500.000 untuk mendapatkan dan membuka template ucapan digital.',
+  qris_image_path: '',
+  telegram_bot_token: '',
+  telegram_chat_id: '',
+  telegram_enabled: '0',
+};
+
+const insertSetting = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
+for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) {
+  insertSetting.run(k, v);
+}
+
+export function getAllSettings() {
+  const rows = db.prepare('SELECT key, value FROM settings').all();
+  const map = { ...DEFAULT_SETTINGS };
+  for (const r of rows) {
+    map[r.key] = r.value;
+  }
+  return map;
+}
+
+export function getPublicSettings() {
+  const all = getAllSettings();
+  // Tidak mengirim telegram_bot_token & telegram_chat_id ke publik
+  const { telegram_bot_token, telegram_chat_id, ...pub } = all;
+  return pub;
+}
+
+export function updateSettings(pairs) {
+  const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+  for (const [k, v] of Object.entries(pairs)) {
+    if (v !== undefined && v !== null) {
+      stmt.run(k, String(v));
+    }
+  }
+  return getAllSettings();
+}
+
+// --- Manajemen Pembayaran (Payments) ---
+export function insertPayment({ payer_name, amount, bank_target, proof_image_path, access_token, note }) {
+  const stmt = db.prepare(`
+    INSERT INTO payments (payer_name, amount, bank_target, proof_image_path, access_token, status, note)
+    VALUES (?, ?, ?, ?, ?, 'pending', ?)
+  `);
+  const res = stmt.run(
+    String(payer_name).trim().slice(0, 100),
+    String(amount || '500.000').slice(0, 50),
+    String(bank_target || 'BCA').slice(0, 50),
+    String(proof_image_path),
+    String(access_token),
+    note ? String(note).slice(0, 255) : null
+  );
+  return Number(res.lastInsertRowid);
+}
+
+export function getPaymentByToken(token) {
+  return db.prepare('SELECT id, payer_name, amount, bank_target, proof_image_path, access_token, status, created_at, reviewed_at FROM payments WHERE access_token = ?').get(token);
+}
+
+export function getPaymentById(id) {
+  return db.prepare('SELECT * FROM payments WHERE id = ?').get(id);
+}
+
+export function listPayments({ status = 'pending', page = 1, limit = 20 } = {}) {
+  const offset = (Math.max(1, page) - 1) * limit;
+  let rows, total;
+  if (status === 'all') {
+    rows = db.prepare('SELECT * FROM payments ORDER BY id DESC LIMIT ? OFFSET ?').all(limit, offset);
+    total = db.prepare('SELECT COUNT(*) AS c FROM payments').get().c;
+  } else {
+    rows = db.prepare('SELECT * FROM payments WHERE status = ? ORDER BY id DESC LIMIT ? OFFSET ?').all(status, limit, offset);
+    total = db.prepare('SELECT COUNT(*) AS c FROM payments WHERE status = ?').get(status).c;
+  }
+  return { rows, total, page, limit };
+}
+
+export function setPaymentStatus(id, status, by = 'admin') {
+  const allowed = ['pending', 'approved', 'rejected'];
+  if (!allowed.includes(status)) throw new Error('status tidak valid');
+  const info = db.prepare(`
+    UPDATE payments SET status = ?, reviewed_at = datetime('now','localtime'), reviewed_by = ? WHERE id = ?
+  `).run(status, by, id);
+  return info.changes;
+}
+
+export function deletePayment(id) {
+  const row = db.prepare('SELECT proof_image_path FROM payments WHERE id = ?').get(id);
+  db.prepare('DELETE FROM payments WHERE id = ?').run(id);
+  return row;
+}
+
+export function getPaymentStats() {
+  const rows = db.prepare('SELECT status, COUNT(*) AS c FROM payments GROUP BY status').all();
+  const stats = { pending: 0, approved: 0, rejected: 0, total: 0 };
+  for (const r of rows) {
+    stats[r.status] = r.c;
+    stats.total += r.c;
+  }
+  return stats;
+}
+

@@ -2,6 +2,10 @@ let token = sessionStorage.getItem('admin_token') || '';
 let tab = 'pending';
 let page = 1;
 let totalPages = 1;
+let payTab = 'pending';
+let payPage = 1;
+let payTotalPages = 1;
+let panel = 'greetings';
 
 const $ = (id) => document.getElementById(id);
 
@@ -202,6 +206,81 @@ async function saveEdit() {
   btn.textContent = 'Simpan Perubahan';
 }
 
+document.querySelectorAll('[data-panel]').forEach((b) => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('[data-panel]').forEach((x) => x.classList.remove('active'));
+    b.classList.add('active');
+    panel = b.getAttribute('data-panel');
+    $('panelGreetings').style.display = panel === 'greetings' ? '' : 'none';
+    $('panelPayments').style.display = panel === 'payments' ? '' : 'none';
+    $('panelSettings').style.display = panel === 'settings' ? '' : 'none';
+    if (panel === 'payments') refreshPayments();
+    if (panel === 'settings') loadSettings();
+  });
+});
+
+document.querySelectorAll('[data-paytab]').forEach((b) => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('[data-paytab]').forEach((x) => x.classList.remove('active'));
+    b.classList.add('active');
+    payTab = b.getAttribute('data-paytab');
+    refreshPayments();
+  });
+});
+
+async function refreshPayments() {
+  payPage = 1;
+  $('payRows').innerHTML = '';
+  await loadPayments();
+}
+
+async function loadPayments() {
+  const res = await api(`/api/admin/payments?status=${payTab}&page=${payPage}&limit=20`);
+  const data = await res.json();
+  payTotalPages = data.totalPages || 1;
+  const s = data.stats || {};
+  $('payStats').innerHTML =
+    `<span class="badge pending">${s.pending || 0} pending</span> ` +
+    `<span class="badge approved">${s.approved || 0} approved</span> ` +
+    `<span class="badge rejected">${s.rejected || 0} rejected</span>`;
+  const tb = $('payRows');
+  for (const p of data.rows || []) {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      `<td>#${p.id}<br/><small>${esc(p.created_at || '')}</small></td>` +
+      `<td><b>${esc(p.payer_name)}</b><br/><small>${esc(p.bank_target || '')}</small><br/>` +
+      `<span class="badge ${p.status}">${p.status}</span></td>` +
+      `<td>Rp ${esc(p.amount)}</td>` +
+      `<td>${p.proof_image_path ? `<a href="${esc(p.proof_image_path)}" target="_blank">Lihat</a>` : '-'}</td>` +
+      `<td style="white-space:nowrap"></td>`;
+    const act = tr.lastElementChild;
+    const mk = (label, cls, fn) => {
+      const b = document.createElement('button');
+      b.className = 'btn btn-small ' + cls;
+      b.type = 'button';
+      b.textContent = label;
+      b.style.marginRight = '6px';
+      b.addEventListener('click', fn);
+      act.appendChild(b);
+    };
+    if (payTab !== 'approved') mk('Setujui', 'btn-success', () => setPay(p.id, 'approved'));
+    if (payTab !== 'rejected') mk('Tolak', '', () => setPay(p.id, 'rejected'));
+    mk('Hapus', 'btn-danger', () => removePay(p.id));
+    tb.appendChild(tr);
+  }
+  $('btnMorePay').style.display = payPage < payTotalPages ? '' : 'none';
+}
+
+async function setPay(id, status) {
+  await api(`/api/admin/payments/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+  refreshPayments();
+}
+
+async function removePay(id) {
+  if (!confirm('Hapus pembayaran #' + id + '?')) return;
+  await api(`/api/admin/payments/${id}`, { method: 'DELETE' });
+  refreshPayments();
+}
 document.querySelectorAll('[data-tab]').forEach((b) => {
   b.addEventListener('click', () => {
     document.querySelectorAll('[data-tab]').forEach((x) => x.classList.remove('active'));
@@ -210,6 +289,102 @@ document.querySelectorAll('[data-tab]').forEach((b) => {
     refresh();
   });
 });
+
+$('btnMorePay').addEventListener('click', () => { if (payPage < payTotalPages) { payPage += 1; loadPayments(); } });
+$('btnSaveSettings').addEventListener('click', saveSettings);
+$('btnTestTg').addEventListener('click', testTelegram);
+
+function setNotice(msg, type) {
+  const el = $('setNotice');
+  el.className = 'notice ' + (type || 'ok');
+  el.textContent = msg;
+}
+
+async function loadSettings() {
+  const res = await api('/api/admin/settings');
+  const s = await res.json();
+  $('setCover').value = s.cover_title || '';
+  $('setNames').value = s.couple_names || '';
+  $('setDate').value = s.wedding_date || '';
+  $('setKicker').value = s.hero_kicker || '';
+  $('setLead').value = s.hero_lead || '';
+  $('setPrice').value = s.price_amount || '';
+  $('setB1Bank').value = s.bank1_bank || '';
+  $('setB1Name').value = s.bank1_name || '';
+  $('setB1No').value = s.bank1_number || '';
+  $('setB2Bank').value = s.bank2_bank || '';
+  $('setB2Name').value = s.bank2_name || '';
+  $('setB2No').value = s.bank2_number || '';
+  $('setTgOn').checked = s.telegram_enabled === '1';
+  $('setTgToken').value = s.telegram_bot_token || '';
+  $('setTgChat').value = s.telegram_chat_id || '';
+  const img = $('setQrisPreview');
+  if (s.qris_image_path) {
+    img.src = s.qris_image_path;
+    img.style.display = 'block';
+  } else {
+    img.style.display = 'none';
+  }
+}
+
+async function saveSettings() {
+  const btn = $('btnSaveSettings');
+  try {
+    btn.disabled = true;
+    const body = {
+      cover_title: $('setCover').value,
+      couple_names: $('setNames').value,
+      wedding_date: $('setDate').value,
+      hero_kicker: $('setKicker').value,
+      hero_lead: $('setLead').value,
+      price_amount: $('setPrice').value,
+      bank1_bank: $('setB1Bank').value,
+      bank1_name: $('setB1Name').value,
+      bank1_number: $('setB1No').value,
+      bank2_bank: $('setB2Bank').value,
+      bank2_name: $('setB2Name').value,
+      bank2_number: $('setB2No').value,
+      telegram_enabled: $('setTgOn').checked ? '1' : '0',
+      telegram_bot_token: $('setTgToken').value,
+      telegram_chat_id: $('setTgChat').value,
+    };
+    const res = await api('/api/admin/settings', { method: 'POST', body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal menyimpan.');
+    const file = $('setQris').files?.[0];
+    if (file) {
+      const fd = new FormData();
+      fd.append('qris', file);
+      const headers = { Accept: 'application/json' };
+      if (token) {
+        headers['x-admin-token'] = token;
+        headers.Authorization = 'Bearer ' + token;
+      }
+      const up = await fetch('/api/admin/upload-qris', { method: 'POST', credentials: 'same-origin', headers, body: fd });
+      const upData = await up.json();
+      if (!up.ok) throw new Error(upData.error || 'QRIS gagal diunggah.');
+    }
+    setNotice('Pengaturan tersimpan.', 'ok');
+    await loadSettings();
+  } catch (e) {
+    setNotice(e.message || 'Gagal menyimpan.', 'err');
+  }
+  btn.disabled = false;
+}
+
+async function testTelegram() {
+  const btn = $('btnTestTg');
+  try {
+    btn.disabled = true;
+    const res = await api('/api/admin/telegram/test', { method: 'POST', body: JSON.stringify({}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Tes gagal.');
+    setNotice(data.message || 'Pesan tes terkirim.', 'ok');
+  } catch (e) {
+    setNotice(e.message || 'Tes gagal.', 'err');
+  }
+  btn.disabled = false;
+}
 
 $('btnLogin').addEventListener('click', login);
 $('inpPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
