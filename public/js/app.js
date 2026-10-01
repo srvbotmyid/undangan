@@ -1,15 +1,15 @@
 // Kartu ucapan: pilih bingkai, overlay teks, kirim.
 const FRAMES = {
-  frame1: { src: '/frames/frame1.png', label: 'Emas Elegan', box: { x: 0.18, y: 0.46, w: 0.64, h: 0.20 }, nameY: 0.85, ink: '#4a3310', zoom: 1.28 },
-  frame2: { src: '/frames/frame2.png', label: 'Floral Sage', box: { x: 0.24, y: 0.34, w: 0.52, h: 0.26 }, nameY: 0.875, ink: '#6b5433' },
-  frame3: { src: '/frames/frame3.png', label: 'Putih Minimalis', box: { x: 0.22, y: 0.33, w: 0.56, h: 0.36 }, nameY: 0.84, ink: '#8a6d2e' },
-  frame4: { src: '/frames/frame4.png', label: 'Blush Romantis', box: { x: 0.27, y: 0.36, w: 0.46, h: 0.22 }, nameY: 0.76, ink: '#6b5433' },
-  frame5: { src: '/frames/frame5.png', label: 'Royal Maroon', box: { x: 0.20, y: 0.32, w: 0.60, h: 0.39 }, nameY: 0.845, ink: '#7a5f22' },
-  frame6: { src: '/frames/frame6.png', label: 'Anggrek Pink', box: { x: 0.24, y: 0.40, w: 0.52, h: 0.25 }, nameY: 0.81, ink: '#8a1c4f' },
-  frame7: { src: '/frames/frame7.png', label: 'Lily Putih', box: { x: 0.22, y: 0.38, w: 0.56, h: 0.36 }, nameY: 0.875, ink: '#8a1c4f' },
-  frame8: { src: '/frames/frame8.png', label: 'Tulip Pink', box: { x: 0.24, y: 0.44, w: 0.52, h: 0.30 }, nameY: 0.875, ink: '#5a5a3a' },
-  frame9: { src: '/frames/frame9.png', label: 'Satin Lily', box: { x: 0.10, y: 0.30, w: 0.55, h: 0.40 }, nameY: 0.80, ink: '#6b3a2a' },
-  frame10: { src: '/frames/frame10.png', label: 'Marble Rose', box: { x: 0.38, y: 0.25, w: 0.54, h: 0.48 }, nameY: 0.82, ink: '#6b5433' }
+  frame1: { src: '/frames/frame1.png', label: 'Emas Floral', box: { x: 0.18, y: 0.34, w: 0.64, h: 0.38 }, nameX: 0.50, nameY: 0.815, ink: '#8a7348' },
+  frame2: { src: '/frames/frame2.png', label: 'Mawar Putih', box: { x: 0.24, y: 0.30, w: 0.52, h: 0.38 }, nameX: 0.50, nameY: 0.815, ink: '#8a7348' },
+  frame3: { src: '/frames/frame3.png', label: 'Lily Putih', box: { x: 0.20, y: 0.32, w: 0.60, h: 0.38 }, nameX: 0.50, nameY: 0.815, ink: '#2f6b45' },
+  frame4: { src: '/frames/frame4.png', label: 'Blush Mawar', box: { x: 0.22, y: 0.32, w: 0.56, h: 0.38 }, nameX: 0.50, nameY: 0.815, ink: '#a68455' },
+  frame5: { src: '/frames/frame5.png', label: 'Emas Barok', box: { x: 0.18, y: 0.30, w: 0.64, h: 0.36 }, nameX: 0.50, nameY: 0.785, ink: '#a68455' },
+  frame6: { src: '/frames/frame6.png', label: 'Satin Lily', box: { x: 0.10, y: 0.34, w: 0.48, h: 0.34 }, nameX: 0.22, nameY: 0.815, ink: '#8a4a55' },
+  frame7: { src: '/frames/frame7.png', label: 'Tulip Pink', box: { x: 0.22, y: 0.30, w: 0.56, h: 0.36 }, nameX: 0.50, nameY: 0.785, ink: '#7a2a55' },
+  frame8: { src: '/frames/frame8.png', label: 'Marble Rose', box: { x: 0.36, y: 0.30, w: 0.52, h: 0.38 }, nameX: 0.42, nameY: 0.785, ink: '#7a2a55' },
+  frame9: { src: '/frames/frame9.png', label: 'Kartu Kayu', box: { x: 0.28, y: 0.32, w: 0.44, h: 0.32 }, nameX: 0.50, nameY: 0.745, ink: '#a68455' },
+  frame10: { src: '/frames/frame10.png', label: 'Anggrek Pink', box: { x: 0.22, y: 0.30, w: 0.56, h: 0.34 }, nameX: 0.50, nameY: 0.765, ink: '#7a2a55' }
 };
 
 const state = { frameId: 'frame1', fontId: 'cormorant', message: '', name: '', guestToken: '', giftProof: '', payToken: '' };
@@ -358,14 +358,10 @@ async function renderCard(exportWidth) {
   ctx.lineWidth = Math.max(2, Math.round(nameFs / 12));
   const rawName = (state.name || 'Nama Pengirim').slice(0, 100);
   const nameText = rawName;
+  const nx = (cfg.nameX || 0.5) * W;
   const ny = (cfg.nameY || 0.8) * H;
-  ctx.strokeText(nameText, W / 2, ny);
-  ctx.fillText(nameText, W / 2, ny);
-  const fromFs = Math.max(12, Math.round(nameFs * 0.32));
-  ctx.font = '500 ' + fromFs + 'px "Jost", sans-serif';
-  ctx.lineWidth = 1;
-  ctx.strokeText('Dari', W / 2, ny - nameFs * 1.15);
-  ctx.fillText('Dari', W / 2, ny - nameFs * 1.15);
+  ctx.strokeText(nameText, nx, ny);
+  ctx.fillText(nameText, nx, ny);
 
   $('btnDownload').href = canvas.toDataURL('image/png');
   return canvas;

@@ -12,7 +12,7 @@ RUN npm ci --omit=dev
 COPY . .
 
 # Pastikan folder persisten ada (DB + hasil kartu)
-RUN mkdir -p data uploads/cards
+RUN mkdir -p data uploads/cards/proofs uploads/qris
 
 EXPOSE 3000
 

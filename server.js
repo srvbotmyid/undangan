@@ -89,7 +89,9 @@ const upload = multer({
 });
 
 // Storage untuk Bukti Transfer
-const proofDir = path.join(__dirname, 'uploads', 'proofs');
+// Bukti transfer ikut volume /app/uploads/cards yang sudah dipasang di Coolify.
+// Folder /uploads/proofs tidak dipasang, jadi file di sana hilang tiap redeploy.
+const proofDir = path.join(__dirname, 'uploads', 'cards', 'proofs');
 fs.mkdirSync(proofDir, { recursive: true });
 const proofStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, proofDir),
@@ -211,7 +213,7 @@ app.post('/api/payments/submit', rateLimit, uploadProof.single('proof'), async (
     }
     const token = crypto.randomUUID();
     const settings = getAllSettings();
-    const proof_image_path = '/uploads/proofs/' + req.file.filename;
+    const proof_image_path = '/uploads/cards/proofs/' + req.file.filename;
     const paymentId = insertPayment({
       payer_name,
       amount: settings.price_amount || '500.000',

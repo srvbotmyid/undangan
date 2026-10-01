@@ -56,6 +56,7 @@ Di halaman aplikasi, isi:
 3. Storages (WAJIB, 2 baris):
    data-undangan -> /app/data
    cards-undangan -> /app/uploads/cards
+   Bukti transfer tersimpan di dalam volume ini (/app/uploads/cards/proofs).
    Tanpa ini DB + foto hilang tiap redeploy.
 
 4. Health Check:

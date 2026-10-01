@@ -27,6 +27,6 @@ npm run optimize-frames
 
 ## Catatan
 
-- Bingkai web ada di `public/frames/` (sudah diperkecil). File asli tetap di `frame/`.
+- Bingkai web ada di `public/frames/` (sudah diperkecil). File asli tetap di `frame v2/`.
 - Ucapan masuk sebagai menunggu; galeri hanya menampilkan yang disetujui.
-- Data: `data/guestbook.sqlite` dan `uploads/cards/` (tidak ikut git).
+- Data: `data/guestbook.sqlite`, kartu di `uploads/cards/`, bukti transfer di `uploads/cards/proofs/` (tidak ikut git).

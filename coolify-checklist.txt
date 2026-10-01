@@ -16,6 +16,7 @@ DB_PATH=./data/guestbook.sqlite
 ## Storages (WAJIB x2)
 data-undangan => /app/data
 cards-undangan => /app/uploads/cards
+# bukti transfer ikut volume ini: /app/uploads/cards/proofs
 
 ## Health Check
 Path: /healthz

@@ -41,7 +41,7 @@ Lalu klik **Deploy** SEKALI. Tunggu log sampai hijau.
    ```
 2. Buka tab **Persistent Storage / Storages** → tambah 2 baris:
    - `data-undangan` → `/app/data`
-   - `cards-undangan` → `/app/uploads/cards`
+   - `cards-undangan` → `/app/uploads/cards` (kartu dan bukti transfer)
    Kalau tidak ada menu ini, data hilang tiap Redeploy — wajib!
 3. Tab **Health Checks** → Path: `/healthz`, Port: `3000`
 4. Klik **Redeploy** sekali lagi.

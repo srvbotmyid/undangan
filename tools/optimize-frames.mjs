@@ -1,5 +1,5 @@
-// Optimasi frame asli (2-8 MB, 2752x1536) menjadi ramah mobile.
-// Input : frame\frameN.png (frame 1-5) atau public\frames\frameN.jpg mentah (frame 6+)
+// Optimasi frame asli (2752x1536) menjadi ramah mobile.
+// Input : frame v2\frameN.jpg
 // Output: public\frames\frameN.jpg (max 1600px, q80) + public\frames\thumbs\frameN.jpg (480px)
 //         + public\frames\frameN.png versi web (max 1600px, kompresi) untuk canvas.
 import sharp from 'sharp';
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
-const SRC_DIR = path.join(ROOT, 'frame');
+const SRC_DIR = path.join(ROOT, 'frame v2');
 const OUT_DIR = path.join(ROOT, 'public', 'frames');
 const THUMB_DIR = path.join(OUT_DIR, 'thumbs');
 
@@ -19,9 +19,9 @@ fs.mkdirSync(THUMB_DIR, { recursive: true });
 const ids = ['frame1', 'frame2', 'frame3', 'frame4', 'frame5', 'frame6', 'frame7', 'frame8', 'frame9', 'frame10'];
 
 for (const id of ids) {
-  // Cari sumber: frame\frameN.png (asli) → fallback ke public\frames\frameN.jpg mentah.
-  let src = path.join(SRC_DIR, `${id}.png`);
-  if (!fs.existsSync(src)) src = path.join(OUT_DIR, `${id}.jpg`);
+  // Cari sumber di folder frame v2.
+  let src = path.join(SRC_DIR, `${id}.jpg`);
+  if (!fs.existsSync(src)) src = path.join(SRC_DIR, `${id}.png`);
   if (!fs.existsSync(src)) {
     console.warn(`[skip] sumber ${id} tidak ditemukan`);
     continue;

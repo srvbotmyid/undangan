@@ -45,6 +45,7 @@ Aplikasi: Node 24 + Express, port **3000**, healthcheck `GET /healthz`.
 5. Tab **Storages / Persistent Storage — WAJIB** (tanpa ini DB + foto hilang tiap redeploy):
    - Volume 1 → Source/persistent name: `data-undangan`, Destination: `/app/data`
    - Volume 2 → Source/persistent name: `cards-undangan`, Destination: `/app/uploads/cards`
+     (kartu ucapan dan bukti transfer sama-sama tersimpan di volume ini)
 6. Tab **Health Check**:
    - Path: `/healthz`, Port: `3000`
 7. Klik **Deploy**.

@@ -101,7 +101,7 @@ Tambah 2 volume:
 | Name | Destination (di container) |
 |---|---|
 | `data-undangan` | `/app/data` |
-| `cards-undangan` | `/app/uploads/cards` |
+| `cards-undangan` | `/app/uploads/cards` (kartu + bukti transfer) |
 
 ### 2d. Tab Health Checks
 - **Path:** `/healthz`

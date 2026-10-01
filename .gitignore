@@ -12,5 +12,8 @@ uploads/cards/*.png
 uploads/cards/*.jpg
 uploads/cards/*.jpeg
 uploads/cards/*.webp
+uploads/cards/proofs/*
+!uploads/cards/proofs/.gitkeep
+uploads/qris/*
 !.env.example
 .DS_Store

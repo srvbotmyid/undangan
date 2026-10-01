@@ -63,21 +63,21 @@ try {
 
 // Seed tabel frames (id -> file publik + label)
 const seedFrames = [
-  ['frame1', '/frames/frame1.png', 'Emas Elegan'],
-  ['frame2', '/frames/frame2.png', 'Floral Sage'],
-  ['frame3', '/frames/frame3.png', 'Putih Minimalis'],
-  ['frame4', '/frames/frame4.png', 'Blush Romantis'],
-  ['frame5', '/frames/frame5.png', 'Royal Maroon'],
-  ['frame6', '/frames/frame6.png', 'Anggrek Pink'],
-  ['frame7', '/frames/frame7.png', 'Lily Putih'],
-  ['frame8', '/frames/frame8.png', 'Tulip Pink'],
-  ['frame9', '/frames/frame9.png', 'Satin Lily'],
-  ['frame10', '/frames/frame10.png', 'Marble Rose'],
+  ['frame1', '/frames/frame1.png', 'Emas Floral'],
+  ['frame2', '/frames/frame2.png', 'Mawar Putih'],
+  ['frame3', '/frames/frame3.png', 'Lily Putih'],
+  ['frame4', '/frames/frame4.png', 'Blush Mawar'],
+  ['frame5', '/frames/frame5.png', 'Emas Barok'],
+  ['frame6', '/frames/frame6.png', 'Satin Lily'],
+  ['frame7', '/frames/frame7.png', 'Tulip Pink'],
+  ['frame8', '/frames/frame8.png', 'Marble Rose'],
+  ['frame9', '/frames/frame9.png', 'Kartu Kayu'],
+  ['frame10', '/frames/frame10.png', 'Anggrek Pink'],
 ];
-const insertFrame = db.prepare(
-  'INSERT OR IGNORE INTO frames (id, file, label) VALUES (?, ?, ?)'
+const upsertFrame = db.prepare(
+  'INSERT INTO frames (id, file, label) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET file = excluded.file, label = excluded.label'
 );
-for (const f of seedFrames) insertFrame.run(...f);
+for (const f of seedFrames) upsertFrame.run(...f);
 
 export const FRAME_IDS = ['frame1', 'frame2', 'frame3', 'frame4', 'frame5', 'frame6', 'frame7', 'frame8', 'frame9', 'frame10'];
 export const FONT_IDS = ['cormorant', 'vibes', 'dancing', 'playfair', 'merriweather', 'jost'];
