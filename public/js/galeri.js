@@ -13,7 +13,7 @@ async function load(reset = false) {
     const div = document.createElement('div');
     div.className = 'g-item';
     const img = g.card_image_path
-      ? `<img src="${g.card_image_path}" alt="Kartu ${g.sender_name}" loading="lazy" />`
+      ? `<button type="button" class="g-thumb" data-src="${escapeHtml(g.card_image_path)}" data-alt="Kartu ${escapeHtml(g.sender_name)}"><img src="${escapeHtml(g.card_image_path)}" alt="Kartu ${escapeHtml(g.sender_name)}" loading="lazy" /></button>`
       : '';
     const fontClass = 'font-' + (g.font_id || 'cormorant');
     const snippet = escapeHtml(g.message.slice(0, 120)) + (g.message.length > 120 ? '…' : '');
@@ -32,6 +32,36 @@ function escapeHtml(s) {
 
 document.getElementById('btnMore').addEventListener('click', () => {
   if (page < totalPages) { page += 1; load(); }
+});
+
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+
+function openPreview(src, alt) {
+  lightboxImg.src = src;
+  lightboxImg.alt = alt || 'Kartu ucapan';
+  lightbox.hidden = false;
+  document.body.classList.add('lightbox-open');
+}
+
+function closePreview() {
+  lightbox.hidden = true;
+  lightboxImg.src = '';
+  document.body.classList.remove('lightbox-open');
+}
+
+document.getElementById('gallery').addEventListener('click', (e) => {
+  const btn = e.target.closest('.g-thumb');
+  if (!btn) return;
+  openPreview(btn.dataset.src, btn.dataset.alt);
+});
+
+lightbox.addEventListener('click', (e) => {
+  if (e.target === lightbox || e.target.closest('[data-close]')) closePreview();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !lightbox.hidden) closePreview();
 });
 
 load(true);

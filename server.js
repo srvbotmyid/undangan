@@ -27,6 +27,7 @@ import {
   deletePayment,
   getPaymentStats,
 } from './db.js';
+import { mountMcp } from './mcp.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -184,6 +185,7 @@ function validateGreeting({ sender_name, message, frame_id, font_id }) {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/healthz', (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+mountMcp(app, __dirname);
 
 app.get('/api/frames', (_req, res) => {
   const rows = db.prepare('SELECT id, file, label FROM frames ORDER BY CAST(SUBSTR(id, 6) AS INTEGER)').all();

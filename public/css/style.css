@@ -101,6 +101,10 @@ textarea:focus, input:focus { outline: 2px solid var(--gold-soft); border-color:
   .wrap { padding: 0 12px; }
 }
 .g-item { background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.g-thumb {
+  display: block; width: 100%; padding: 0; border: 0; background: #111;
+  cursor: zoom-in;
+}
 .g-item img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
 .g-item .meta { padding: 10px 12px; }
 .g-item .meta b { display: block; }
@@ -435,6 +439,27 @@ textarea.font-jost { font-size: 18px; line-height: 1.5; }
 .wish-item p.font-dancing { font-size: 22px; line-height: 1.45; }
 .g-item .meta small.font-vibes,
 .g-item .meta small.font-dancing { font-size: 16px; }
+.lightbox {
+  position: fixed; inset: 0; z-index: 40;
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 16px 16px;
+  background: rgba(28, 20, 12, 0.88);
+}
+.lightbox[hidden] { display: none; }
+.lightbox img {
+  max-width: min(1100px, 100%);
+  max-height: calc(100vh - 80px);
+  width: auto; height: auto;
+  border-radius: 12px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+.lightbox-close {
+  position: absolute; top: 12px; right: 12px;
+  width: 40px; height: 40px; border-radius: 999px;
+  border: 0; background: #fff; color: var(--ink);
+  font-size: 28px; line-height: 1; cursor: pointer;
+}
+body.lightbox-open { overflow: hidden; }
 @media (min-width: 900px) {
   .theme-undangan {
     background:
