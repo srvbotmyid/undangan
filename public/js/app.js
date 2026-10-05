@@ -115,7 +115,7 @@ async function pollPayment() {
       wait.className = 'notice ' + (data.status === 'rejected' ? 'err' : 'ok');
       wait.textContent = data.status === 'rejected'
         ? 'Pembayaran ditolak. Coba bayar lagi atau unggah bukti yang jelas.'
-        : 'Menunggu pembayaran. Halaman ini akan terbuka otomatis.';
+        : 'Menunggu pembayaran. Halaman ini akan terbuka otomatis. Harap tunggu 15 menit untuk verifikasi transfer.';
     }
   } catch { /* coba lagi di tick berikutnya */ }
 }
@@ -173,7 +173,7 @@ $('mayarForm')?.addEventListener('submit', async (e) => {
     payNotice(err.message || 'Gagal membuat pembayaran.', 'err');
   }
   btn.disabled = false;
-  btn.textContent = 'Bayar sekarang';
+  btn.textContent = 'Pembayaran';
 });
 
 $('payForm')?.addEventListener('submit', async (e) => {

@@ -228,7 +228,8 @@ footer { text-align: center; color: var(--muted); padding: 28px 12px 60px; font-
 .bank-block { margin: 12px 0 16px; }
 .pay-form { text-align: left; margin-top: 12px; }
 .pay-form select,
-.pay-form input[type="file"] { width: 100%; margin: 0 0 12px; }
+.pay-form input[type="file"],
+.pay-form input[type="text"] { width: 100%; margin: 0 0 12px; }
 .pay-or { text-align: center; margin: 18px 0 8px; font-size: 13px; }
 .pay-modal {
   position: fixed;

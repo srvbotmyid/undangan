@@ -29,7 +29,7 @@
     <section class="card" id="giftGate">
       <p class="kicker">Ucapan Digital</p>
       <h2>Tanda Kasih</h2>
-      <p class="muted">Kehadiran dan Doa Restu Bapak/Ibu merupakan kebahagiaan bagi kami. Jika berkenan memberikan tanda kasih, dapat mengirimkan ucapan digital di bawah ini.</p>
+      <p class="muted">Kehadiran dan Doa Restu Bapak/Ibu merupakan kebahagiaan bagi kami.<br>Jika berkenan memberikan tanda kasih,<br>dengan mengirimkan ucapan digital di bawah ini.</p>
       <p class="price-line">Rp <span id="priceAmount">500.000</span></p>
       <p class="muted" id="payTestNote" style="display:none">Mode uji coba. Nominal sementara lebih kecil dari harga asli.</p>
 
@@ -37,7 +37,7 @@
         <label class="lbl" for="mayarName">Nama</label>
         <input type="text" id="mayarName" maxlength="100" placeholder="Nama Anda" required />
         <div class="actions" style="justify-content:center">
-          <button class="btn btn-primary" id="btnMayar" type="submit">Bayar sekarang</button>
+          <button class="btn btn-primary" id="btnMayar" type="submit">Pembayaran</button>
         </div>
       </form>
       <p class="muted pay-or">atau transfer manual</p>
@@ -69,6 +69,7 @@
         <div class="actions" style="justify-content:center">
           <button class="btn btn-primary" id="btnPaySubmit" type="submit">Kirim Bukti</button>
         </div>
+        <p class="muted" style="text-align:center">Harap tunggu 15 menit untuk verifikasi transfer.</p>
       </form>
       <div class="notice" id="payNotice"></div>
       <div class="notice ok" id="payWait" style="display:none"></div>
@@ -94,6 +95,7 @@
       <div class="lock-overlay" id="lockOverlay">
         <div>Kartu ucapan masih tertutup
           <small id="lockHint">Bayar tanda kasih, atau unggah bukti transfer.</small>
+          <small>Harap tunggu 15 menit untuk verifikasi transfer.</small>
         </div>
       </div>
       <div class="lockable">
