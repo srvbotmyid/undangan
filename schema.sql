@@ -34,14 +34,19 @@ CREATE TABLE IF NOT EXISTS payments (
   payer_name VARCHAR(100) NOT NULL,
   amount TEXT NOT NULL DEFAULT '500.000',
   bank_target TEXT NOT NULL DEFAULT 'BCA',
-  proof_image_path TEXT NOT NULL,
+  proof_image_path TEXT,
   access_token TEXT NOT NULL UNIQUE,
   status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
   note TEXT,
   created_at DATETIME DEFAULT (datetime('now','localtime')),
   reviewed_at DATETIME,
-  reviewed_by TEXT DEFAULT 'admin'
+  reviewed_by TEXT DEFAULT 'admin',
+  mayar_invoice_id TEXT,
+  mayar_transaction_id TEXT,
+  mayar_link TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_payments_token ON payments(access_token);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_payments_mayar_invoice ON payments(mayar_invoice_id);
+
 

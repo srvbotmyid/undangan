@@ -22,6 +22,7 @@ import {
   insertPayment,
   getPaymentByToken,
   getPaymentById,
+  getPaymentByMayarInvoice,
   listPayments,
   setPaymentStatus,
   deletePayment,
@@ -132,41 +133,103 @@ const uploadQris = multer({
 });
 
 // Helper Kirim Notifikasi Telegram
-async function notifyTelegram({ title, message, photoPath }) {
+async function notifyTelegram({ title, message, photoPath, buttons }) {
   const cfg = getAllSettings();
-  const token = (process.env.TELEGRAM_BOT_TOKEN || cfg.telegram_bot_token || '').trim();
-  const chatId = (process.env.TELEGRAM_CHAT_ID || cfg.telegram_chat_id || '').trim();
-  const enabled = cfg.telegram_enabled === '1' || Boolean(process.env.TELEGRAM_BOT_TOKEN);
-  if (!enabled || !token || !chatId) return { ok: false, reason: 'Telegram belum aktif atau token kosong' };
+  const { token, chatIds, enabled } = telegramCfg();
+  if (!enabled || !token || !chatIds.length) return { ok: false, reason: 'Telegram belum aktif atau token kosong' };
 
   try {
     const caption = `<b>${title}</b>\n\n${message}`;
-    if (photoPath && fs.existsSync(photoPath)) {
-      const form = new FormData();
-      form.append('chat_id', chatId);
-      form.append('caption', caption);
-      form.append('parse_mode', 'HTML');
-      const fileBytes = fs.readFileSync(photoPath);
-      const blob = new Blob([fileBytes]);
-      form.append('photo', blob, path.basename(photoPath));
-      const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-        method: 'POST',
-        body: form,
-      });
-      const data = await res.json();
-      return { ok: data.ok, data };
-    } else {
-      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: caption, parse_mode: 'HTML' }),
-      });
-      const data = await res.json();
-      return { ok: data.ok, data };
+    const reply_markup = buttons ? { inline_keyboard: buttons } : undefined;
+    const results = [];
+    for (const chatId of chatIds) {
+      if (photoPath && fs.existsSync(photoPath)) {
+        const form = new FormData();
+        form.append('chat_id', chatId);
+        form.append('caption', caption.slice(0, 1000));
+        form.append('parse_mode', 'HTML');
+        if (reply_markup) form.append('reply_markup', JSON.stringify(reply_markup));
+        form.append('photo', new Blob([fs.readFileSync(photoPath)]), path.basename(photoPath));
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: form });
+        results.push((await res.json()).ok);
+      } else {
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: caption, parse_mode: 'HTML', reply_markup }),
+        });
+        results.push((await res.json()).ok);
+      }
     }
+    return { ok: results.some(Boolean) };
   } catch (err) {
     console.warn('Gagal kirim notif telegram:', err.message);
     return { ok: false, error: err.message };
+  }
+}
+
+function telegramCfg() {
+  const cfg = getAllSettings();
+  const raw = process.env.TELEGRAM_CHAT_ID || cfg.telegram_chat_id || '';
+  const chatIds = [...new Set(String(raw).split(/[\s,;]+/).map((id) => id.trim()).filter(Boolean))];
+  return {
+    token: (process.env.TELEGRAM_BOT_TOKEN || cfg.telegram_bot_token || '').trim(),
+    chatIds,
+    enabled: cfg.telegram_enabled === '1' || Boolean(process.env.TELEGRAM_BOT_TOKEN),
+  };
+}
+
+function escHtml(value) {
+  return String(value || '').replace(/[&<>]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
+}
+
+function notifyMayarPaid(row) {
+  if (!row) return;
+  notifyTelegram({
+    title: 'Pembayaran Mayar lunas',
+    message: 'Nama: <b>' + escHtml(row.payer_name) + '</b>\nNominal: Rp ' + escHtml(row.amount) + '\nStatus: otomatis disetujui, form ucapan terbuka.',
+  }).catch(() => {});
+}
+
+async function answerTelegramCallback(id, text) {
+  const { token } = telegramCfg();
+  if (!token || !id) return;
+  await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ callback_query_id: id, text }),
+  }).catch(() => {});
+}
+
+let telegramOffset = 0;
+async function pollTelegram() {
+  const { token, chatIds, enabled } = telegramCfg();
+  if (!enabled || !token || !chatIds.length) return;
+  const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?timeout=0&offset=${telegramOffset}`);
+  const data = await res.json();
+  if (!data.ok) return;
+  for (const update of data.result || []) {
+    telegramOffset = update.update_id + 1;
+    const query = update.callback_query;
+    if (!query) continue;
+    if (!chatIds.includes(String(query.message?.chat?.id || ''))) {
+      await answerTelegramCallback(query.id, 'Chat ini tidak diizinkan.');
+      continue;
+    }
+    const [action, kind, rawId] = String(query.data || '').split(':');
+    const id = Number(rawId);
+    if (!['ok', 'no'].includes(action) || !id) {
+      await answerTelegramCallback(query.id, 'Perintah tidak dikenal.');
+      continue;
+    }
+    const status = action === 'ok' ? 'approved' : 'rejected';
+    if (kind === 'pay') {
+      const changes = setPaymentStatus(id, status, 'telegram');
+      await answerTelegramCallback(query.id, changes ? (status === 'approved' ? 'Pembayaran disetujui.' : 'Pembayaran ditolak.') : 'Data tidak ditemukan.');
+    } else if (kind === 'greet') {
+      const changes = setStatus(id, status, 'telegram');
+      await answerTelegramCallback(query.id, changes ? (status === 'approved' ? 'Ucapan disetujui.' : 'Ucapan ditolak.') : 'Data tidak ditemukan.');
+    }
   }
 }
 
@@ -227,9 +290,13 @@ app.post('/api/payments/submit', rateLimit, uploadProof.single('proof'), async (
 
     // Kirim notifikasi bot Telegram jika aktif
     notifyTelegram({
-      title: '🔔 Pembayaran Masuk (Rp ' + (settings.price_amount || '500.000') + ')',
-      message: `ID: #${paymentId}\nNama Pengirim: <b>${payer_name}</b>\nTujuan: <b>${bb.bank_target || 'BCA'}</b>\nWaktu: ${new Date().toLocaleString('id-ID')}\n\nSilakan cek panel /admin untuk verifikasi.`,
+      title: 'Bukti transfer masuk',
+      message: `ID: #${paymentId}\nNama: <b>${escHtml(payer_name)}</b>\nTujuan: <b>${escHtml(bb.bank_target || 'BCA')}</b>\nNominal: Rp ${escHtml(settings.price_amount || '500.000')}\n\nTekan Setujui untuk membuka form ucapan.`,
       photoPath: req.file.path,
+      buttons: [[
+        { text: 'Setujui', callback_data: `ok:pay:${paymentId}` },
+        { text: 'Tolak', callback_data: `no:pay:${paymentId}` },
+      ]],
     }).catch(() => {});
 
     res.status(201).json({
@@ -243,19 +310,164 @@ app.post('/api/payments/submit', rateLimit, uploadProof.single('proof'), async (
   }
 });
 
-app.get('/api/payments/status/:token', (req, res) => {
+function parseRupiah(raw) {
+  const digits = String(raw || '').replace(/[^\d]/g, '');
+  const n = Number(digits);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function mayarConfig() {
+  const apiKey = String(process.env.MAYAR_API_KEY || '').trim();
+  const base = String(process.env.MAYAR_BASE_URL || 'https://api.mayar.id/hl/v2').replace(/\/$/, '');
+  return { apiKey, base, enabled: Boolean(apiKey) };
+}
+
+function chargeAmount(settings) {
+  const test = parseRupiah(process.env.MAYAR_TEST_AMOUNT);
+  if (test > 0) return test;
+  return parseRupiah(settings.price_amount) || 500000;
+}
+
+function formatRupiah(n) {
+  return Number(n).toLocaleString('id-ID');
+}
+
+async function mayarFetch(pathname, { method = 'GET', body } = {}) {
+  const { apiKey, base } = mayarConfig();
+  if (!apiKey) throw new Error('Mayar belum dikonfigurasi.');
+  const res = await fetch(base + pathname, {
+    method,
+    headers: {
+      Authorization: 'Bearer ' + apiKey,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || (data.statusCode && data.statusCode >= 400)) {
+    const msg = data.messages || data.message || ('Mayar error ' + res.status);
+    throw new Error(typeof msg === 'string' ? msg : 'Mayar menolak permintaan.');
+  }
+  return data;
+}
+
+function pickInvoiceId(payload) {
+  const data = payload?.data && typeof payload.data === 'object' ? payload.data : payload;
+  return String(data?.paymentLinkId || data?.invoiceId || data?.id || payload?.paymentLinkId || '').trim();
+}
+
+async function confirmMayarPaid(invoiceId) {
+  if (!invoiceId) return null;
+  const detail = await mayarFetch('/invoices/' + encodeURIComponent(invoiceId));
+  const row = detail?.data || {};
+  if (String(row.status || '').toLowerCase() !== 'paid') return null;
+  return row;
+}
+
+app.get('/api/payments/config', (_req, res) => {
+  const settings = getAllSettings();
+  const amount = chargeAmount(settings);
+  res.json({
+    mayar: mayarConfig().enabled,
+    amount,
+    amount_label: formatRupiah(amount),
+    test_mode: parseRupiah(process.env.MAYAR_TEST_AMOUNT) > 0,
+  });
+});
+
+app.post('/api/payments/mayar/create', rateLimit, async (req, res) => {
+  try {
+    if (!mayarConfig().enabled) return res.status(503).json({ error: 'Pembayaran Mayar belum aktif.' });
+    const payer_name = String(req.body?.payer_name || '').trim();
+    if (!payer_name || payer_name.length > 100) {
+      return res.status(400).json({ error: 'Nama pengirim wajib diisi.' });
+    }
+    const settings = getAllSettings();
+    const amount = chargeAmount(settings);
+    const token = crypto.randomUUID();
+    const expiredAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+    const created = await mayarFetch('/invoices/create', {
+      method: 'POST',
+      body: {
+        name: payer_name,
+        email: 'tamu-' + token.slice(0, 8) + '@undangan.local',
+        mobile: '080000000000',
+        description: 'Tanda kasih ' + (settings.couple_names || 'undangan'),
+        expiredAt,
+        items: [{ quantity: 1, rate: amount, description: 'Tanda kasih ucapan digital' }],
+        extraData: { access_token: token },
+      },
+    });
+    const invoice = created.data || {};
+    const link = String(invoice.link || invoice.paymentUrl || '');
+    if (!invoice.id || !link) return res.status(502).json({ error: 'Mayar tidak mengembalikan link pembayaran.' });
+    insertPayment({
+      payer_name,
+      amount: formatRupiah(amount),
+      bank_target: 'Mayar',
+      proof_image_path: null,
+      access_token: token,
+      note: 'mayar',
+      mayar_invoice_id: invoice.id,
+      mayar_transaction_id: invoice.transactionId || '',
+      mayar_link: link,
+    });
+    res.status(201).json({ ok: true, token, link, amount: formatRupiah(amount) });
+  } catch (err) {
+    console.error('Mayar create error:', err.message);
+    res.status(502).json({ error: 'Gagal membuat pembayaran. Coba lagi.' });
+  }
+});
+
+app.post('/api/mayar/webhook', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const event = String(body.event || '').toLowerCase();
+    const invoiceId = pickInvoiceId(body);
+    if (!invoiceId) return res.json({ ok: true, ignored: true });
+    if (event && event !== 'payment.received') return res.json({ ok: true, ignored: true });
+    const paid = await confirmMayarPaid(invoiceId);
+    if (!paid) return res.json({ ok: true, pending: true });
+    const row = getPaymentByMayarInvoice(invoiceId);
+    if (row && row.status !== 'approved') {
+      setPaymentStatus(row.id, 'approved', 'mayar');
+      notifyMayarPaid(row);
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Mayar webhook error:', err.message);
+    res.status(500).json({ ok: false });
+  }
+});
+
+app.get('/api/payments/status/:token', async (req, res) => {
   const token = String(req.params.token || '');
   if (!token) return res.status(400).json({ error: 'Token diperlukan.' });
   const row = getPaymentByToken(token);
   if (!row) return res.status(404).json({ error: 'Data pembayaran tidak ditemukan.' });
+  if (row.status === 'pending' && row.mayar_invoice_id && mayarConfig().enabled) {
+    try {
+      const paid = await confirmMayarPaid(row.mayar_invoice_id);
+      if (paid && row.status !== 'approved') {
+        setPaymentStatus(row.id, 'approved', 'mayar');
+        notifyMayarPaid(row);
+      }
+    } catch (err) {
+      console.warn('Cek status Mayar gagal:', err.message);
+    }
+  }
+  const fresh = getPaymentByToken(token) || row;
   res.json({
-    status: row.status,
-    payer_name: row.payer_name,
-    amount: row.amount,
-    created_at: row.created_at,
-    reviewed_at: row.reviewed_at,
+    status: fresh.status,
+    payer_name: fresh.payer_name,
+    amount: fresh.amount,
+    link: fresh.mayar_link || '',
+    created_at: fresh.created_at,
+    reviewed_at: fresh.reviewed_at,
   });
 });
+
 
 
 
@@ -482,6 +694,15 @@ app.post('/api/greetings', rateLimit, upload.single('card'), (req, res) => {
       guest_token: String(guest_token || '').slice(0, 50),
       font_id,
     });
+    notifyTelegram({
+      title: 'Ucapan baru',
+      message: `ID: #${id}\nNama: <b>${escHtml(sender_name)}</b>\nBingkai: ${escHtml(frame_id)}\n\n${escHtml(String(message).trim().slice(0, 500))}`,
+      photoPath: req.file?.path,
+      buttons: [[
+        { text: 'Setujui', callback_data: `ok:greet:${id}` },
+        { text: 'Tolak', callback_data: `no:greet:${id}` },
+      ]],
+    }).catch(() => {});
     res.status(201).json({
       id, status: 'pending', card_url: card_image_path,
       message: 'Terima kasih! Ucapanmu tersimpan dan menunggu persetujuan admin.',
@@ -501,6 +722,7 @@ app.use((err, _req, res, _next) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log('Undangan QR jalan di http://localhost:' + PORT);
   console.log('  / (form) | /gift | /galeri | /admin | /healthz');
+  setInterval(() => { pollTelegram().catch((err) => console.warn('Telegram poll:', err.message)); }, 4000);
 });
 
 // Shutdown rapi saat Coolify restart/redeploy container

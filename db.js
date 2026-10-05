@@ -15,10 +15,55 @@ export const db = new DatabaseSync(DB_PATH);
 db.exec('PRAGMA journal_mode = WAL;');
 db.exec('PRAGMA foreign_keys = ON;');
 
+function migratePaymentsForMayar() {
+  const payCols = db.prepare('PRAGMA table_info(payments)').all();
+  if (!payCols.length) return;
+  const names = new Set(payCols.map((c) => c.name));
+  if (!names.has('mayar_invoice_id')) {
+    db.exec('ALTER TABLE payments ADD COLUMN mayar_invoice_id TEXT');
+    db.exec('ALTER TABLE payments ADD COLUMN mayar_transaction_id TEXT');
+    db.exec('ALTER TABLE payments ADD COLUMN mayar_link TEXT');
+    db.exec('CREATE INDEX IF NOT EXISTS idx_payments_mayar_invoice ON payments(mayar_invoice_id)');
+    console.log('Migrasi DB: kolom Mayar ditambah.');
+  }
+  const proof = payCols.find((c) => c.name === 'proof_image_path');
+  if (proof && proof.notnull) {
+    db.exec('PRAGMA foreign_keys = OFF');
+    db.exec(`CREATE TABLE payments_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      payer_name VARCHAR(100) NOT NULL,
+      amount TEXT NOT NULL DEFAULT '500.000',
+      bank_target TEXT NOT NULL DEFAULT 'BCA',
+      proof_image_path TEXT,
+      access_token TEXT NOT NULL UNIQUE,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+      note TEXT,
+      created_at DATETIME DEFAULT (datetime('now','localtime')),
+      reviewed_at DATETIME,
+      reviewed_by TEXT DEFAULT 'admin',
+      mayar_invoice_id TEXT,
+      mayar_transaction_id TEXT,
+      mayar_link TEXT
+    )`);
+    db.exec(`INSERT INTO payments_new (id, payer_name, amount, bank_target, proof_image_path, access_token, status, note, created_at, reviewed_at, reviewed_by, mayar_invoice_id, mayar_transaction_id, mayar_link)
+      SELECT id, payer_name, amount, bank_target, proof_image_path, access_token, status, note, created_at, reviewed_at, reviewed_by, mayar_invoice_id, mayar_transaction_id, mayar_link FROM payments`);
+    db.exec('DROP TABLE payments');
+    db.exec('ALTER TABLE payments_new RENAME TO payments');
+    db.exec('CREATE INDEX IF NOT EXISTS idx_payments_token ON payments(access_token)');
+    db.exec('CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status, created_at DESC)');
+    db.exec('CREATE INDEX IF NOT EXISTS idx_payments_mayar_invoice ON payments(mayar_invoice_id)');
+    db.exec('PRAGMA foreign_keys = ON');
+    console.log('Migrasi DB: bukti transfer Mayar boleh kosong.');
+  }
+}
+try { migratePaymentsForMayar(); } catch (e) { console.warn('Migrasi DB Mayar dilewati:', e.message); }
+
 // Terapkan schema.sql
 const schemaPath = path.join(__dirname, 'schema.sql');
 const schema = fs.readFileSync(schemaPath, 'utf8');
 db.exec(schema);
+try { migratePaymentsForMayar(); } catch (e) { console.warn('Migrasi DB Mayar dilewati:', e.message); }
+
 
 // Migrasi ringan: DB lama (sebelum frame6-10) punya CHECK frame_id
 // yang hanya mengizinkan frame1-5. SQLite tidak bisa ALTER CHECK,
@@ -220,25 +265,48 @@ export function updateSettings(pairs) {
 }
 
 // --- Manajemen Pembayaran (Payments) ---
-export function insertPayment({ payer_name, amount, bank_target, proof_image_path, access_token, note }) {
+export function insertPayment({ payer_name, amount, bank_target, proof_image_path, access_token, note, mayar_invoice_id, mayar_transaction_id, mayar_link, status }) {
   const stmt = db.prepare(`
-    INSERT INTO payments (payer_name, amount, bank_target, proof_image_path, access_token, status, note)
-    VALUES (?, ?, ?, ?, ?, 'pending', ?)
+    INSERT INTO payments (payer_name, amount, bank_target, proof_image_path, access_token, status, note, mayar_invoice_id, mayar_transaction_id, mayar_link)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
+  const payStatus = status === 'approved' ? 'approved' : 'pending';
   const res = stmt.run(
     String(payer_name).trim().slice(0, 100),
     String(amount || '500.000').slice(0, 50),
-    String(bank_target || 'BCA').slice(0, 50),
-    String(proof_image_path),
+    String(bank_target || 'Mayar').slice(0, 50),
+    proof_image_path ? String(proof_image_path) : null,
     String(access_token),
-    note ? String(note).slice(0, 255) : null
+    payStatus,
+    note ? String(note).slice(0, 255) : null,
+    mayar_invoice_id ? String(mayar_invoice_id).slice(0, 80) : null,
+    mayar_transaction_id ? String(mayar_transaction_id).slice(0, 80) : null,
+    mayar_link ? String(mayar_link).slice(0, 300) : null
   );
   return Number(res.lastInsertRowid);
 }
 
 export function getPaymentByToken(token) {
-  return db.prepare('SELECT id, payer_name, amount, bank_target, proof_image_path, access_token, status, created_at, reviewed_at FROM payments WHERE access_token = ?').get(token);
+  return db.prepare('SELECT id, payer_name, amount, bank_target, proof_image_path, access_token, status, created_at, reviewed_at, mayar_invoice_id, mayar_link FROM payments WHERE access_token = ?').get(token);
 }
+
+export function getPaymentByMayarInvoice(invoiceId) {
+  return db.prepare('SELECT * FROM payments WHERE mayar_invoice_id = ?').get(String(invoiceId || ''));
+}
+
+export function attachMayarInvoice(id, { mayar_invoice_id, mayar_transaction_id, mayar_link }) {
+  db.prepare(`
+    UPDATE payments
+    SET mayar_invoice_id = ?, mayar_transaction_id = ?, mayar_link = ?
+    WHERE id = ?
+  `).run(
+    String(mayar_invoice_id || ''),
+    mayar_transaction_id ? String(mayar_transaction_id) : null,
+    mayar_link ? String(mayar_link) : null,
+    id
+  );
+}
+
 
 export function getPaymentById(id) {
   return db.prepare('SELECT * FROM payments WHERE id = ?').get(id);

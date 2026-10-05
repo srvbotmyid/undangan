@@ -248,10 +248,10 @@ async function loadPayments() {
     const tr = document.createElement('tr');
     tr.innerHTML =
       `<td>#${p.id}<br/><small>${esc(p.created_at || '')}</small></td>` +
-      `<td><b>${esc(p.payer_name)}</b><br/><small>${esc(p.bank_target || '')}</small><br/>` +
-      `<span class="badge ${p.status}">${p.status}</span></td>` +
+      `<td><b>${esc(p.payer_name)}</b><br/><span class="badge ${p.status}">${p.status}</span></td>` +
       `<td>Rp ${esc(p.amount)}</td>` +
-      `<td>${p.proof_image_path ? `<a href="${esc(p.proof_image_path)}" target="_blank">Lihat</a>` : '-'}</td>` +
+      `<td>${esc(p.bank_target || '-')}</td>` +
+      `<td>${p.mayar_link ? `<a href="${esc(p.mayar_link)}" target="_blank" rel="noopener">Mayar</a>` : (p.proof_image_path ? `<a href="${esc(p.proof_image_path)}" target="_blank">Lihat</a>` : '-')}</td>` +
       `<td style="white-space:nowrap"></td>`;
     const act = tr.lastElementChild;
     const mk = (label, cls, fn) => {

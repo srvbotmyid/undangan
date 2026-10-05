@@ -2,16 +2,16 @@
 // box = area ucapan (di bawah nama mempelai, di atas label "Dari:").
 // nameX/nameY = nama pengirim, tepat di bawah "Dari:".
 const FRAMES = {
-  frame1: { src: '/frames/frame1.png', label: 'Emas Floral', box: { x: 0.18, y: 0.36, w: 0.64, h: 0.36 }, nameX: 0.50, nameY: 0.875, ink: '#8a7348' },
-  frame2: { src: '/frames/frame2.png', label: 'Mawar Putih', box: { x: 0.24, y: 0.34, w: 0.52, h: 0.32 }, nameX: 0.50, nameY: 0.815, ink: '#8a7348' },
-  frame3: { src: '/frames/frame3.png', label: 'Lily Putih', box: { x: 0.20, y: 0.34, w: 0.60, h: 0.33 }, nameX: 0.50, nameY: 0.835, ink: '#2f6b45' },
-  frame4: { src: '/frames/frame4.png', label: 'Blush Mawar', box: { x: 0.22, y: 0.36, w: 0.56, h: 0.36 }, nameX: 0.50, nameY: 0.875, ink: '#a68455' },
-  frame5: { src: '/frames/frame5.png', label: 'Emas Barok', box: { x: 0.16, y: 0.30, w: 0.68, h: 0.40 }, nameX: 0.50, nameY: 0.855, ink: '#a68455' },
-  frame6: { src: '/frames/frame6.png', label: 'Satin Lily', box: { x: 0.05, y: 0.28, w: 0.42, h: 0.40 }, nameX: 0.10, nameY: 0.90, nameAlign: 'left', nameMaxW: 0.40, ink: '#8a4a55' },
-  frame7: { src: '/frames/frame7.png', label: 'Tulip Pink', box: { x: 0.20, y: 0.34, w: 0.60, h: 0.30 }, nameX: 0.50, nameY: 0.80, ink: '#7a2a55' },
-  frame8: { src: '/frames/frame8.png', label: 'Marble Rose', box: { x: 0.46, y: 0.26, w: 0.46, h: 0.34 }, nameX: 0.62, nameY: 0.90, ink: '#7a2a55' },
-  frame9: { src: '/frames/frame9.png', label: 'Kartu Kayu', box: { x: 0.30, y: 0.405, w: 0.40, h: 0.26 }, nameX: 0.50, nameY: 0.785, ink: '#a68455' },
-  frame10: { src: '/frames/frame10.png', label: 'Anggrek Pink', box: { x: 0.22, y: 0.32, w: 0.56, h: 0.26 }, nameX: 0.50, nameY: 0.835, ink: '#7a2a55' }
+  frame1: { src: '/frames/frame1.png', label: 'Emas Floral', box: { x: 0.18, y: 0.36, w: 0.64, h: 0.36 }, nameX: 0.50, nameY: 0.895, ink: '#8a7348' },
+  frame2: { src: '/frames/frame2.png', label: 'Mawar Putih', box: { x: 0.24, y: 0.34, w: 0.52, h: 0.32 }, nameX: 0.50, nameY: 0.835, ink: '#8a7348', zoom: 1.16, zoomY: 0.62 },
+  frame3: { src: '/frames/frame3.png', label: 'Lily Putih', box: { x: 0.20, y: 0.34, w: 0.60, h: 0.33 }, nameX: 0.50, nameY: 0.855, ink: '#2f6b45' },
+  frame4: { src: '/frames/frame4.png', label: 'Blush Mawar', box: { x: 0.22, y: 0.36, w: 0.56, h: 0.36 }, nameX: 0.50, nameY: 0.895, ink: '#a68455' },
+  frame5: { src: '/frames/frame5.png', label: 'Emas Barok', box: { x: 0.16, y: 0.30, w: 0.68, h: 0.40 }, nameX: 0.50, nameY: 0.875, ink: '#a68455' },
+  frame6: { src: '/frames/frame6.png', label: 'Satin Lily', box: { x: 0.05, y: 0.28, w: 0.42, h: 0.40 }, nameX: 0.10, nameY: 0.92, nameAlign: 'left', nameMaxW: 0.42, nameScale: 1.55, ink: '#6b2438', nameStroke: 'rgba(255,248,242,0.92)' },
+  frame7: { src: '/frames/frame7.png', label: 'Tulip Pink', box: { x: 0.20, y: 0.34, w: 0.60, h: 0.30 }, nameX: 0.50, nameY: 0.82, ink: '#7a2a55' },
+  frame8: { src: '/frames/frame8.png', label: 'Marble Rose', box: { x: 0.46, y: 0.26, w: 0.46, h: 0.34 }, nameX: 0.62, nameY: 0.92, ink: '#7a2a55' },
+  frame9: { src: '/frames/frame9.png', label: 'Kartu Kayu', box: { x: 0.22, y: 0.36, w: 0.56, h: 0.30 }, nameX: 0.50, nameY: 0.95, nameMaxW: 0.46, nameScale: 1.05, ink: '#a68455', zoom: 1.45, zoomY: 0.44 },
+  frame10: { src: '/frames/frame10.png', label: 'Anggrek Pink', box: { x: 0.22, y: 0.32, w: 0.56, h: 0.26 }, nameX: 0.50, nameY: 0.80, ink: '#7a2a55' }
 };
 
 const state = { frameId: 'frame1', fontId: 'cormorant', message: '', name: '', guestToken: '', giftProof: '', payToken: '' };
@@ -76,8 +76,8 @@ function applyGiftLock() {
   const hint = $('lockHint');
   if (hint && !open) {
     hint.textContent = state.payToken
-      ? 'Bukti sudah dikirim. Menunggu persetujuan admin.'
-      : 'Unggah bukti transfer dan tunggu persetujuan admin.';
+      ? 'Pembayaran sedang dicek. Halaman ini terbuka otomatis setelah lunas.'
+      : 'Bayar tanda kasih, atau unggah bukti transfer.';
   }
 }
 function unlockGift() {
@@ -106,6 +106,7 @@ async function pollPayment() {
     const wait = $('payWait');
     if (data.status === 'approved') {
       if (pollTimer) clearInterval(pollTimer);
+      closePayModal();
       unlockGift();
       return;
     }
@@ -113,11 +114,68 @@ async function pollPayment() {
       wait.style.display = 'block';
       wait.className = 'notice ' + (data.status === 'rejected' ? 'err' : 'ok');
       wait.textContent = data.status === 'rejected'
-        ? 'Bukti ditolak. Unggah ulang bukti transfer yang jelas.'
-        : 'Menunggu verifikasi admin. Halaman ini akan terbuka otomatis.';
+        ? 'Pembayaran ditolak. Coba bayar lagi atau unggah bukti yang jelas.'
+        : 'Menunggu pembayaran. Halaman ini akan terbuka otomatis.';
     }
   } catch { /* coba lagi di tick berikutnya */ }
 }
+function openPayModal(link) {
+  const modal = $('payModal');
+  const frame = $('payFrame');
+  const external = $('payModalExternal');
+  if (!modal || !frame || !link) return false;
+  frame.src = link;
+  if (external) external.href = link;
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  return true;
+}
+function closePayModal() {
+  const modal = $('payModal');
+  const frame = $('payFrame');
+  if (modal) modal.hidden = true;
+  if (frame) frame.src = 'about:blank';
+  document.body.style.overflow = '';
+}
+$('payModalClose')?.addEventListener('click', closePayModal);
+$('payModal')?.addEventListener('click', (e) => { if (e.target === $('payModal')) closePayModal(); });
+
+$('mayarForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('btnMayar');
+  const name = $('mayarName')?.value?.trim() || '';
+  if (!name) { payNotice('Nama wajib diisi.', 'err'); return; }
+  const payer = $('payerName');
+  const sender = $('inpName');
+  if (payer && !payer.value) payer.value = name;
+  if (sender && !sender.value) { sender.value = name; state.name = name; }
+  try {
+    btn.disabled = true;
+    btn.textContent = 'Membuka pembayaran...';
+    const res = await fetch('/api/payments/mayar/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payer_name: name }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal membuat pembayaran.');
+    savePayToken(data.token);
+    applyGiftLock();
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(pollPayment, 4000);
+    pollPayment();
+    if (data.link && openPayModal(data.link)) {
+      payNotice('Pembayaran terbuka. Setelah lunas, form ucapan terbuka otomatis.', 'ok');
+    } else {
+      payNotice('Gagal membuka pembayaran.', 'err');
+    }
+  } catch (err) {
+    payNotice(err.message || 'Gagal membuat pembayaran.', 'err');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Bayar sekarang';
+});
+
 $('payForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = $('btnPaySubmit');
@@ -158,6 +216,19 @@ async function loadPublicSettings() {
     set('heroNames', s.couple_names);
     set('footNames', s.couple_names);
     set('priceAmount', s.price_amount);
+    try {
+      const cfgRes = await fetch('/api/payments/config');
+      if (cfgRes.ok) {
+        const cfg = await cfgRes.json();
+        if (cfg.amount_label) set('priceAmount', cfg.amount_label);
+        const note = $('payTestNote');
+        if (note) note.style.display = cfg.test_mode ? 'block' : 'none';
+        const mayar = $('mayarForm');
+        if (mayar) mayar.style.display = cfg.mayar ? '' : 'none';
+        const or = document.querySelector('.pay-or');
+        if (or) or.style.display = cfg.mayar ? '' : 'none';
+      }
+    } catch { /* harga default tetap tampil */ }
     if (s.bank1_name) {
       const label = $('bank1Label');
       if (label) label.textContent = (s.bank1_bank || 'BCA') + ' · a.n. ' + s.bank1_name;
@@ -317,8 +388,8 @@ async function renderCard(exportWidth) {
   if (zoom > 1) {
     const sw = img.naturalWidth / zoom;
     const sh = img.naturalHeight / zoom;
-    const sx = (img.naturalWidth - sw) / 2;
-    const sy = (img.naturalHeight - sh) / 2;
+    const sx = (img.naturalWidth - sw) * (cfg.zoomX == null ? 0.5 : cfg.zoomX);
+    const sy = (img.naturalHeight - sh) * (cfg.zoomY == null ? 0.5 : cfg.zoomY);
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
   } else {
     ctx.drawImage(img, 0, 0, W, H);
@@ -355,23 +426,57 @@ async function renderCard(exportWidth) {
     y += fs * 1.45;
   }
 
-  const nameFs = Math.round(W * 0.038);
-  ctx.font = fontSpec(nameFs, true);
-  ctx.lineWidth = Math.max(2, Math.round(nameFs / 12));
   const rawName = (state.name || 'Nama Pengirim').slice(0, 40);
   const nameAlign = cfg.nameAlign || 'center';
   ctx.textAlign = nameAlign;
   let nx = (cfg.nameX || 0.5) * W;
   const ny = (cfg.nameY || 0.8) * H;
-  const nameMax = (cfg.nameMaxW || (nameAlign === 'left' ? 0.34 : 0.55)) * W;
-  let nameText = rawName;
-  while (nameText.length > 1 && ctx.measureText(nameText).width > nameMax) {
-    nameText = nameText.slice(0, -1);
+  // Lebar aman: nama boleh melebar, tapi tidak menimpa ornamen tepi.
+  const edge = 0.05 * W;
+  let nameMax;
+  if (nameAlign === 'left') {
+    nameMax = Math.min((cfg.nameMaxW || 0.42) * W, W - nx - edge);
+  } else if (nameAlign === 'right') {
+    nameMax = Math.min((cfg.nameMaxW || 0.42) * W, nx - edge);
+  } else {
+    nameMax = Math.min((cfg.nameMaxW || 0.62) * W, 2 * Math.min(nx, W - nx) - edge);
   }
-  if (nameText !== rawName) nameText = nameText.replace(/\s+\S*$/, '') + '…';
+  nameMax = Math.max(40, nameMax);
+  // Nama panjang mengecil dulu. Kalau masih tidak muat, pecah baris (jika diizinkan), baru titik tiga.
+  const maxNameLines = cfg.nameLines || 1;
+  let nameFs = Math.round(W * (maxNameLines > 1 ? 0.034 : 0.048) * (cfg.nameScale || 1));
+  const minNameFs = Math.round(W * 0.026);
+  ctx.font = fontSpec(nameFs, true);
+  const nameLinesOf = (px) => {
+    ctx.font = fontSpec(px, true);
+    return wrapText(ctx, rawName, nameMax);
+  };
+  let nameLines = nameLinesOf(nameFs);
+  while (nameFs > minNameFs && nameLines.length > maxNameLines) {
+    nameFs -= 1;
+    nameLines = nameLinesOf(nameFs);
+  }
+  ctx.lineWidth = Math.max(2, Math.round(nameFs / 12));
+  ctx.strokeStyle = cfg.nameStroke || 'rgba(255,255,255,0.85)';
+  if (nameLines.length > maxNameLines) {
+    nameLines = nameLines.slice(0, maxNameLines);
+    let last = nameLines[maxNameLines - 1];
+    while (last.length > 1 && ctx.measureText(last + '…').width > nameMax) last = last.slice(0, -1);
+    nameLines[maxNameLines - 1] = last.replace(/\s+\S*$/, '').replace(/…$/, '') + '…';
+  }
+  const lineGap = nameFs * 0.95;
+  // Satu baris tetap di anchor. Baris tambahan turun ke bawah, tidak naik menimpa "Dari:".
+  let nameY0 = ny;
+  const floorY = H - nameFs * 0.35;
+  if (nameY0 + (nameLines.length - 1) * lineGap > floorY) {
+    nameY0 = Math.max(ny - nameFs * 0.15, floorY - (nameLines.length - 1) * lineGap);
+  }
   if (nameAlign === 'left') nx = Math.max(nx, 16);
-  ctx.strokeText(nameText, nx, ny);
-  ctx.fillText(nameText, nx, ny);
+  for (let i = 0; i < nameLines.length; i += 1) {
+    const ly = nameY0 + i * lineGap;
+    ctx.strokeText(nameLines[i], nx, ly);
+    ctx.fillText(nameLines[i], nx, ly);
+  }
   ctx.textAlign = 'center';
 
   $('btnDownload').href = canvas.toDataURL('image/png');

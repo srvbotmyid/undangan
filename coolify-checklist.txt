@@ -12,6 +12,15 @@ NODE_ENV=production
 ADMIN_PASSWORD=ganti-min-16-karakter-acak-disini
 PUBLIC_BASE_URL=https://undangan.domain-kamu.id
 DB_PATH=./data/guestbook.sqlite
+MAYAR_API_KEY=tempel-api-key-mayar
+MAYAR_BASE_URL=https://api.mayar.id/hl/v2
+# Uji coba saja. Hapus baris ini setelah tes supaya harga kembali 500.000
+MAYAR_TEST_AMOUNT=1000
+# Webhook Mayar: PUBLIC_BASE_URL + /api/mayar/webhook
+TELEGRAM_BOT_TOKEN=
+# Boleh lebih dari satu, pisahkan koma.
+TELEGRAM_CHAT_ID=
+
 
 ## Storages (WAJIB x2)
 data-undangan => /app/data
